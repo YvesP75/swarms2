@@ -3,14 +3,13 @@ import numpy as np
 from gym import spaces
 
 
-class SortFilterWrapper(gym.Wrapper):
+class FilterWrapper(gym.Wrapper):
     """
     :param env: (gym.Env) Gym environment that will be wrapped
     """
 
     def __init__(self, env):
         # Call the parent constructor, so we can access self.env later
-        super(SortFilterWrapper, self).__init__(env)
 
         self.nb_blues, self.nb_reds = env.nb_blues, env.nb_reds
 
@@ -20,10 +19,12 @@ class SortFilterWrapper(gym.Wrapper):
         env.observation_space = spaces.Tuple((
             spaces.Box(low=0, high=1, shape=(self.nb_blues, 6), dtype=np.float32),
             spaces.Box(low=0, high=1, shape=(self.nb_reds, 6), dtype=np.float32),
-            spaces.Box(low=0, high=1, shape=(self.nb_blues, self.nb_reds), dtype=int),
-            spaces.Box(low=0, high=1, shape=(self.nb_reds, self.nb_blues), dtype=int),
+            spaces.Box(low=0, high=1, shape=(self.nb_blues, self.nb_reds), dtype=np.float32),
+            spaces.Box(low=0, high=1, shape=(self.nb_reds, self.nb_blues), dtype=np.float32),
             spaces.Discrete(1),
             spaces.Discrete(1)))
+
+        super(FilterWrapper, self).__init__(env)
 
     def reset(self):
         """
@@ -41,6 +42,16 @@ class SortFilterWrapper(gym.Wrapper):
 
         blue_action, red_action = action
 
+        new_ba = []
+        index = 0
+        for count, alive in enumerate(~self.blue_deads):
+            if alive:
+                new_ba.append(blue_action[index])
+                index += 1
+            else:
+                new_ba.append(np.array([0, 0, 0]))
+        blue_action = new_ba
+
         new_ra = []
         index = 0
         for count, alive in enumerate(~self.red_deads):
@@ -50,16 +61,6 @@ class SortFilterWrapper(gym.Wrapper):
             else:
                 new_ra.append(np.array([0, 0, 0]))
         red_action = new_ra
-
-        new_rb = []
-        index = 0
-        for count, alive in enumerate(~self.blue_deads):
-            if alive:
-                new_rb.append(blue_action[index])
-                index += 1
-            else:
-                new_rb.append(np.array([0, 0, 0]))
-        blue_action = new_rb
 
         action = blue_action, red_action
 
@@ -76,9 +77,6 @@ class SortFilterWrapper(gym.Wrapper):
         self.blue_deads = blue_deads
         self.red_deads = red_deads
 
-        if True in self.blue_deads or True in self.red_deads:
-            alpha = 0
-
         blue_obs = np.vstack((blue_obs[~self.blue_deads], blue_obs[self.blue_deads]))
         red_obs = np.vstack((red_obs[~self.red_deads], red_obs[self.red_deads]))
 
@@ -90,9 +88,6 @@ class SortFilterWrapper(gym.Wrapper):
         return sort_obs
 
     def fire_sort(self, dead_friends, dead_foes, friends_fire):
-
-        if 0 < np.sum(friends_fire):
-            alpha = 0
 
         friends_fire_big = np.zeros_like(friends_fire)
         friends_fire = np.compress(~dead_friends, friends_fire, axis=0)

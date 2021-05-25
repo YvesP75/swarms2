@@ -13,7 +13,6 @@ class SortWrapper(gym.Wrapper):
         self.blue_signature = None
         self.red_signature = None
 
-
     def reset(self):
         """
         Reset the environment
@@ -33,10 +32,12 @@ class SortWrapper(gym.Wrapper):
 
         obs, reward, done, info = self.env.step(action)
 
-        obs = self.sort_obs(obs)
+        obs = self.post_obs(obs)
 
         return obs, reward, done, info
 
+    def post_obs(self, obs):
+        return self.sort_obs(obs)
 
     def sort_obs(self, obs):
 
@@ -52,7 +53,6 @@ class SortWrapper(gym.Wrapper):
 
         return obs
 
-
     def unsort_action(self, action):
 
         blue_action, red_action = action
@@ -61,8 +61,6 @@ class SortWrapper(gym.Wrapper):
         unsorted_red_action = self.unsort_with_signature(red_action, self.red_signature)
 
         action = unsorted_blue_action, unsorted_red_action
-
-
 
         return action
 
@@ -79,7 +77,6 @@ class SortWrapper(gym.Wrapper):
         sorted_array, signature = zip(*zip_sorted)
         return np.array(sorted_array), signature
 
-
     def unsort_with_signature(self, an_array: np.ndarray, signature: []) -> np.ndarray:
         """
         see above
@@ -92,14 +89,9 @@ class SortWrapper(gym.Wrapper):
         _, unsorted = zip(*zip_unsorted)
         return np.array(unsorted)
 
+    def unsort_matrix_with_signatures(self, matrix: np.ndarray, sign_line: np.ndarray, sign_col: np.ndarray) \
+            -> np.ndarray:
 
-    def unsort_matrix_with_signatures(self, matrix: np.ndarray, sign_line: np.ndarray, sign_col: np.ndarray) -> np.ndarray:
-        """
-        see above
-        :param an_array:
-        :param signature:
-        :return:
-        """
         matrix = self.unsort_with_signature(matrix, sign_line)
         matrix = self.unsort_with_signature(matrix.T, sign_col).T
 

@@ -33,8 +33,8 @@ class SwarmEnv(gym.Env):
         self.observation_space = spaces.Tuple((
             spaces.Box(low=0, high=1, shape=(self.nb_blues, 6), dtype=np.float32),
             spaces.Box(low=0, high=1, shape=(self.nb_reds, 6), dtype=np.float32),
-            spaces.Box(low=0, high=1, shape=(self.nb_blues, self.nb_reds), dtype=int),
-            spaces.Box(low=0, high=1, shape=(self.nb_reds, self.nb_blues), dtype=int),
+            spaces.Box(low=0, high=1, shape=(self.nb_blues, self.nb_reds), dtype=np.float32),
+            spaces.Box(low=0, high=1, shape=(self.nb_reds, self.nb_blues), dtype=np.float32),
             spaces.MultiBinary(self.nb_blues),
             spaces.MultiBinary(self.nb_reds),
         ))
@@ -75,9 +75,9 @@ class SwarmEnv(gym.Env):
         _, red_deads = self.red_team.get_observation()
         obs = blue_obs, red_obs, bf_obs, rf_obs, blue_deads, red_deads
         reward = blue_reward + red_reward + bf_reward + rf_reward
-        done = blue_done * red_done * bf_done * rf_done
-        info = ''
-        _, new_loss = self.playground.heuristic()
+        done = bool(blue_done * red_done * bf_done * rf_done)
+        info = {}
+        new_loss, _ = self.playground.heuristic()
         delta_loss = new_loss - self.loss
         self.loss = new_loss
 

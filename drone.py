@@ -28,7 +28,6 @@ class Drone:
     min_positions = np.zeros((3,))
     max_positions = np.array([Settings.perimeter, 2*np.pi, Settings.perimeter_z])
 
-
     def __post_init__(self):
         self.drone_model = DroneModel(self.is_blue)
         self.max_speeds = np.array([self.drone_model.max_speed,
@@ -60,15 +59,16 @@ class Drone:
                 
             if self._out_of_bounds():
                 self.is_alive = False
-                reward = -param_.OOB_COST
-                if self.is_blue:
-                    print("another blue is oob")
-                else:
-                    print("another red is oob")
+                coef = -1 if self.is_blue else 1
+                reward = coef * param_.OOB_COST
+                # if self.is_blue:
+                #    print("another blue is oob")
+                # else:
+                #   print("another red is oob")
             else:
                 if self._hits_target():
                     reward = -param_.RED_COST
-                    print("another red hits the target")
+                #    print("another red hits the target")
                     self.color = param_.RED_SUCCESS_COLOR
                     self.is_alive = False  # the red has done its job ...
 
@@ -78,7 +78,7 @@ class Drone:
         return obs, reward, done, 0
 
     def _out_of_bounds(self):
-        return not 0 < self.position[2] < Settings.perimeter_z
+        return not (0 < self.position[2] < Settings.perimeter_z and self.position[1] < Settings.perimeter)
 
     def _hits_target(self):
         if self.is_blue:
@@ -97,13 +97,8 @@ class Drone:
             return False
 
         # lets see if foe is in the "fire cone"
-
         pos_xyz = - self.to_xyz(self.position) + self.to_xyz(foe.position)
         distance = np.linalg.norm(pos_xyz)
-        if distance == 0:
-            print('hum')
-            distance = 1/np.inf
-            pass
         pos_xyz /= distance
 
         if distance < self.drone_model.distance_to_neutralisation:
@@ -201,9 +196,6 @@ class Drone:
         return np.append(normalised_position, normalised_speed)
 
     def simple_red(self) -> np.ndarray(shape=(3,)):
-
-        if not self.is_blue:
-            alpha = 0
 
         theta = (self.position[1] + np.pi) / (2*np.pi) % 1
 

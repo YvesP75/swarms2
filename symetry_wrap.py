@@ -1,8 +1,6 @@
 import numpy as np
 import gym
 
-from drone import Drone
-
 
 class SymetryWrapper(gym.Wrapper):
     """
@@ -11,8 +9,9 @@ class SymetryWrapper(gym.Wrapper):
 
     def __init__(self, env):
         # Call the parent constructor, so we can access self.env later
-        super(SymetryWrapper, self).__init__(env)
+
         self.symetry = False  # no need to perform a symetry
+        super(SymetryWrapper, self).__init__(env)
 
     def reset(self):
         """
@@ -20,69 +19,77 @@ class SymetryWrapper(gym.Wrapper):
         """
         obs = self.env.reset()
 
-        self.symetry = self.get_symetry(obs)
-        if self.symetry:
-            obs = self.symetrise_obs(obs)
+        obs = self.post_obs(obs)
 
         return obs
 
     def step(self, action):
         """
-        :param blue_action: ([float] or int) Action taken by the agent
+        :param action: ([float] or int) Action taken by the agent
         :return: (np.ndarray, float, bool, dict) observation, reward, is the episode over?, additional informations
         """
         if self.symetry:
-            action = self.symetrise_action(action)
+            action = symetrise_action(action)
 
         obs, reward, done, info = self.env.step(action)
 
-        self.symetry = self.get_symetry(obs)
-        if self.symetry:
-            obs = self.symetrise_obs(obs)
+        obs = self.post_obs(obs)
 
         return obs, reward, done, info
 
-    def get_symetry(self, obs):
-        blue_obs, red_obs, blue_fire, red_fire = obs
-
-        # count the drones who are positioned above the 0 x-axis
-        count = 0
-        for this_obs in (blue_obs, red_obs):
-            for d in this_obs:
-                add = 1 if (d[1] < 0.5) else 0
-                count += add
-
-        # compare with the total
-        symetry = 2*count < (len(blue_obs) + len(red_obs))
-
-        return symetry
+    def post_obs(self, obs):
+        self.symetry = get_symetry(obs)
+        if self.symetry:
+            obs = symetrise_obs(obs)
+        return obs
 
 
-    def symetrise_obs(self, obs):
+def get_symetry(obs):
+    blue_obs, red_obs, blue_fire, red_fire = obs
 
-        blue_obs, red_obs, blue_fire, red_fire = obs
+    # count the drones who are positioned above the 0 x-axis
+    count = 0
+    for this_obs in (blue_obs, red_obs):
+        for d in this_obs:
+            add = 1 if (d[1] < 0.5) else 0
+            count += add
 
-        for this_obs in (blue_obs, red_obs):
-            for d in this_obs:
+    # compare with the total
+    symetry = bool(2*count < (len(blue_obs) + len(red_obs)))
 
-                # symetrise positions and speeds
-                d[1] = - d[1]
-                d[4] = - d[4]
-
-        return blue_obs, red_obs, blue_fire, red_fire
+    return symetry
 
 
-    def symetrise_action(self, action):
+def symetrise_obs(obs):
 
-        blue_action, red_action = action
+    blue_obs, red_obs, blue_fire, red_fire = obs
 
-        for this_action in (blue_action, red_action):
-            for act in this_action:
+    for this_obs in (blue_obs, red_obs):
+        # symetrise positions and speeds
+        this_obs[:, 1] = 1 - this_obs[:, 1]
+        this_obs[:, 4] = 1 - this_obs[:, 4]
 
-                # symetrise action
-                act[1] = - act[1]
+    return blue_obs, red_obs, blue_fire, red_fire
 
-        action = blue_action, red_action
 
-        return action
+def symetrise_action(action):
 
+    blue_action, red_action = action
+
+    for this_action in (blue_action, red_action):
+        for act in this_action:
+
+            # symetrise action
+            act[1] = - act[1]
+
+    action = blue_action, red_action
+
+    return action
+
+
+def test_symetrise_obs():
+
+    obs = np.arange(12).reshape(2, 6), np.arange(12).reshape(2, 6), np.random.random((1, 1)), np.random.random((1, 1))
+    print(obs)
+    symetrise_obs(obs)
+    print(obs)

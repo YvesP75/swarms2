@@ -20,8 +20,7 @@ class RotateWrapper(gym.Wrapper):
         """
         obs = self.env.reset()
 
-        self.angle = self.get_angle(obs)
-        obs = self.rotate_obs(obs)
+        obs = self.post_obs(obs)
 
         return obs
 
@@ -35,11 +34,13 @@ class RotateWrapper(gym.Wrapper):
 
         obs, reward, done, info = self.env.step(action)
 
-
-        self.angle = self.get_angle(obs)
-        obs = self.rotate_obs(obs)
+        obs = self.post_obs(obs)
 
         return obs, reward, done, info
+
+    def post_obs(self, obs):
+        self.angle = self.get_angle(obs)
+        return self.rotate_obs(obs)
 
     def get_angle(self, obs: np.ndarray) -> float:
         blue_obs, red_obs, blue_fire, red_fire = obs

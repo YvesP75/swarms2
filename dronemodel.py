@@ -66,7 +66,6 @@ class DroneModel:
                 1/m * (f_y - Cxy * dy * np.sqrt(dx**2 + dy**2 + dz**2)),
                 1/m * (f_z - Cz * dz * np.sqrt(dx**2 + dy**2 + dz**2))]
 
-
     def fulljac(self, pos_speed, time_, Cxy, Cz, m):
         x, y, z, dx, dy, dz = pos_speed
         J = np.zeros((6, 6))

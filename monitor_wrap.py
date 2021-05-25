@@ -4,8 +4,9 @@ import numpy as np
 import gym
 import pandas as pd
 
-from settings import Settings
 import param_
+from settings import Settings
+
 
 Path = make_dataclass("Path", [('path', list), ('step', int), ('d_index', int), ('color', list)])
 
@@ -15,9 +16,10 @@ class MonitorWrapper(gym.Wrapper):
     :param env: (gym.Env) Gym environment that will be wrapped
     """
 
-    def __init__(self, env, steps):
+    def __init__(self, env, steps, verbose=True):
         # Call the parent constructor, so we can access self.env later
         super(MonitorWrapper, self).__init__(env)
+        self.verbose = verbose
         self.blue_data = []
         self.red_data = []
         self.fire_paths = []
@@ -49,7 +51,8 @@ class MonitorWrapper(gym.Wrapper):
 
         obs, reward, done, info = self.env.step(action)
 
-        self.monitor_state()
+        if self.verbose:
+            self.monitor_state()
 
         self.step_ += 1
         if self.step_ == self.steps:

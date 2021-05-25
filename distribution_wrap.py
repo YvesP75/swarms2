@@ -7,6 +7,8 @@ from runner import run_episode
 from redux_wrap import ReduxWrapper
 from rotate_wrap import RotateWrapper
 from symetry_wrap import SymetryWrapper
+from sort_wrap import SortWrapper
+from team_wrap import TeamWrapper
 
 
 class DistriWrapper(gym.Wrapper):
@@ -15,20 +17,22 @@ class DistriWrapper(gym.Wrapper):
     """
 
     def __init__(self, env):
-        # Call the parent constructor, so we can access self.env later
-        super(DistriWrapper, self).__init__(env)
+
         self.blue_deads = self.red_deads = 0
         self.nb_blues, self.nb_reds = env.nb_blues, env.nb_reds
 
         env.observation_space = spaces.Tuple((
             spaces.Box(low=0, high=1, shape=(self.nb_blues, 6), dtype=np.float32),
             spaces.Box(low=0, high=1, shape=(self.nb_reds, 6), dtype=np.float32),
-            spaces.Box(low=0, high=1, shape=(self.nb_blues, self.nb_reds), dtype=int),
-            spaces.Box(low=0, high=1, shape=(self.nb_reds, self.nb_blues), dtype=int)))
+            spaces.Box(low=0, high=1, shape=(self.nb_blues, self.nb_reds), dtype=np.float32),
+            spaces.Box(low=0, high=1, shape=(self.nb_reds, self.nb_blues), dtype=np.float32)))
 
         env.action_space = spaces.Tuple((
             spaces.Box(low=0, high=1, shape=(self.nb_blues, 3), dtype=np.float32),
             spaces.Box(low=0, high=1, shape=(self.nb_reds, 3), dtype=np.float32)))
+
+        # Call the parent constructor, so we can access self.env later
+        super(DistriWrapper, self).__init__(env)
 
     def reset(self):
         """
@@ -37,7 +41,7 @@ class DistriWrapper(gym.Wrapper):
         obs = self.env.reset()
         blue_obs, red_obs, blues_fire, reds_fire, blue_deads, red_deads = obs
         self.blue_deads, self.blue_deads = blue_deads, red_deads
-        return obs
+        return blue_obs, red_obs, blues_fire, reds_fire
 
     def step(self, action):
         """
@@ -56,18 +60,32 @@ class DistriWrapper(gym.Wrapper):
             return obs, reward, True, info
 
         if blue_deads == len(blue_obs):  # reds have won
-            remaining_reds = len(red_obs) - red_deads
             return obs, reward, True, info
 
+        # do we have new deaths?
         new_blue_deads = blue_deads - self.blue_deads
         new_red_deads = red_deads - self.red_deads
         self.blue_deads, self.red_deads = blue_deads, red_deads
 
         if 0 < new_red_deads + new_blue_deads:  # we have someone killed but we still have some fight
 
-            reduced_env = SymetryWrapper(RotateWrapper(ReduxWrapper(self,  minus_blue=blue_deads, minus_red=red_deads)))
-            reduced_obs = reduced_env.reduce_(obs)
-            obs, reward_episode, _, info = run_episode(reduced_env, reduced_obs)
-            return obs, reward_episode, True, info
+            blues, reds = self.nb_blues - blue_deads, self.nb_reds - red_deads
 
-        return obs, reward, False, info
+            env = ReduxWrapper(self,  minus_blue=blue_deads, minus_red=red_deads)
+            obs_ = env.post_obs(obs)
+
+            env = RotateWrapper(env)
+            obs_ = env.post_obs(obs_)
+
+            env = SymetryWrapper(env)
+            obs_ = env.post_obs(obs_)
+
+            env = SortWrapper(env)
+            obs_ = env.post_obs(obs_)
+
+            env = TeamWrapper(env, is_double=True)
+            obs_ = env.post_obs(obs_)
+
+            _, reward, done, info = run_episode(env, obs_, blues=blues, reds=reds)
+
+        return obs, reward, done, info

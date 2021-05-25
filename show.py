@@ -1,27 +1,27 @@
 import time
-import numpy as np
 import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
 from monitor_wrap import MonitorWrapper
-from filter_wrap import SortFilterWrapper
+from filter_wrap import FilterWrapper
 from distribution_wrap import DistriWrapper
 from redux_wrap import ReduxWrapper
-from blue_wrap import BlueWrapper
 from symetry_wrap import SymetryWrapper
 from rotate_wrap import RotateWrapper
 from sort_wrap import SortWrapper
+from team_wrap import TeamWrapper
 
-from settings import Settings
+from runner import run_episode
+from settings import Settings, define_
 import param_
 from swarmenv import SwarmEnv
 
 
-def run(with_streamlit=True):
+def run(with_streamlit=True, blues: int = 1, reds: int = 1):
 
     # define settings with Streamlit (or use default parameters)
-    blues, reds = Settings.define(with_streamlit=with_streamlit)
+    blues, reds = define_(with_streamlit=with_streamlit, blues=blues, reds=reds)
 
     # put in place the map
     deck_map, initial_view_state = pre_show(with_streamlit=with_streamlit)
@@ -29,9 +29,17 @@ def run(with_streamlit=True):
     # launch the episode to get the data
     steps = int(param_.DURATION / param_.STEP)
     monitor_env = MonitorWrapper(SwarmEnv(blues=blues, reds=reds), steps)
-    env = BlueWrapper(SortWrapper(SymetryWrapper(RotateWrapper(ReduxWrapper(
-        DistriWrapper(SortFilterWrapper(monitor_env)))))))
-    run_episode(env)
+    env = FilterWrapper(monitor_env)
+    env = DistriWrapper(env)
+    env = ReduxWrapper(env)
+    env = SortWrapper(
+            SymetryWrapper(
+                RotateWrapper(env)))
+
+    env = TeamWrapper(env, is_double=True)
+
+    obs = env.reset()
+    run_episode(env, obs, blues=blues, reds=reds)
 
     # display the data with Streamlit
     if with_streamlit:
@@ -52,18 +60,6 @@ def pre_show(with_streamlit=True):
         return deck_map, initial_view_state
     else:
         return 0, 0
-
-
-def run_episode(env: SwarmEnv):
-    env.reset()
-    action_blue = np.zeros((env.nb_blues, 3))
-    action_blue[:, 0] = 1
-    action_blue[:, 1] = 0.5
-    action_blue[:, 2] = 0.5  # 0.5 flight is horizontal
-
-    done = False
-    while not done:
-        _, _, done, _ = env.step(action_blue)
 
 
 def show(monitor_env, deck_map, initial_view_state):
@@ -169,4 +165,4 @@ def get_path_layers(df_path: pd.DataFrame, step: int) -> [pdk.Layer]:
 
 # and ... do not forget
 run(with_streamlit=True)
-#run(with_streamlit=False)
+# run(blues=1, reds=3, with_streamlit=False)

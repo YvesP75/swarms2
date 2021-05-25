@@ -38,7 +38,6 @@ class Playground:
         self.distance_blue_shot = param_.DRONE_MODELS[param_.DRONE_MODEL[True]]['distance_to_neutralisation']
         self.distance_red_shot = param_.DRONE_MODELS[param_.DRONE_MODEL[False]]['distance_to_neutralisation']
 
-
     def reset(self):
         self.blues_have_fired_reds[...] = 0
         self.reds_have_fired_blues[...] = 0
@@ -55,9 +54,6 @@ class Playground:
         # gets who has fired who in this step
         blues_fire_reds = np.array([[blue.fires_(red) for red in self.red_drones] for blue in self.blue_drones])
         reds_fire_blues = np.array([[red.fires_(blue) for blue in self.blue_drones] for red in self.red_drones])
-
-        if 0 < np.sum(blues_fire_reds) + np.sum(reds_fire_blues):
-            alpha = 0
 
         # if the foe is no longer seen, the count restarts from 0
         self.blues_have_fired_reds *= blues_fire_reds
@@ -82,8 +78,8 @@ class Playground:
         bf_done, rf_done = len(red_deads), len(blue_deads)
         bf_info, rf_info = red_deads, blue_deads
 
-        if bf_done + rf_done > 0:
-            print('someone is killed: {0} blues and {1} reds'.format(rf_done, bf_done))
+        # if bf_done + rf_done > 0:
+        #    print('someone is killed: {0} blues and {1} reds'.format(rf_done, bf_done))
 
         return bf_obs, bf_reward, bf_done, bf_info, rf_obs, rf_reward, rf_done, rf_info
 
@@ -95,16 +91,21 @@ class Playground:
 
         # check that there still are some drones alive
         if len(blue_drones) * len(red_drones) == 0:
-            print('fight is over : there are still {0} blues and {1} reds'.format(len(blue_drones), len(red_drones)))
+            # print('fight is over : there are still {0} blues and {1} reds'.format(len(blue_drones), len(red_drones)))
             return 0, 0
 
         # create a matrix that gives for each blue drone the distance to each red drone
         rb_distance = np.array([[blue.distance(red) for red in red_drones] for blue in blue_drones])
 
+        # what count is the distance to be fired
+        rb_distance -= self.distance_blue_shot
+        rb_distance = np.clip(rb_distance, 0, np.inf)
+
         # the distance goes through a "norm" function to give a weight of 1 to the the closest drones
         normalised_rb_distance = np.exp(-0.5 * (rb_distance / self.distance_blue_shot) ** 2)
 
-        # each blue drone contributes a % of its capacity on pressure to red. this % is such that sum of blue weight = 1
+        # each blue drone contributes a % of its capacity on pressure to red.
+        # this % is such that sum of blue weight = 1
         sum_blue_weight = np.tile(np.sum(normalised_rb_distance, axis=1), (len(red_drones), 1)).T
         blue_weight = normalised_rb_distance / sum_blue_weight
 
@@ -129,9 +130,3 @@ class Playground:
         total_red_loss_weighted = np.sum(red_loss_weighted)
 
         return total_red_loss, total_red_loss_weighted
-
-
-
-
-
-

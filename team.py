@@ -1,9 +1,11 @@
 import numpy as np
 from dataclasses import dataclass
 
+import param_
 from drone import Drone
 from dronemodel import DroneModel
 from settings import Settings
+
 
 @dataclass
 class Team:
@@ -58,7 +60,8 @@ class BlueTeam(Team):
         blue_speed = Settings.blue_speed_init * self.drone_model.max_speed
         circle = index = 0
         for d in range(number_of_drones):
-            positions[d] = np.array([Settings.blue_circles_rho[circle],
+            positions[d] = np.array([min(Settings.blue_circles_rho[circle] * Settings.blue_distance_factor,
+                                         param_.PERIMETER),
                                      Settings.blue_circles_theta[circle] + index * 2 * np.pi / 3,
                                      Settings.blue_circles_zed[circle]])
             clockwise = 1 - 2 * (circle % 2)
@@ -86,7 +89,9 @@ class RedTeam(Team):
         speed_rho = Settings.red_speed_init * self.drone_model.max_speed
         squad = index = 0
         for d in range(number_of_drones):
-            positions[d] = [Settings.red_squads_rho[squad] + np.random.rand() * Settings.red_rho_noise[squad],
+            positions[d] = [min(Settings.red_squads_rho[squad] * Settings.red_distance_factor
+                            + np.random.rand() * Settings.red_rho_noise[squad],
+                                param_.PERIMETER),
                             Settings.red_squads_theta[squad] + np.random.rand() * Settings.red_theta_noise[squad],
                             Settings.red_squads_zed[squad] + np.random.rand() * Settings.red_zed_noise[squad]]
             speeds[d] = [speed_rho, np.pi + positions[d][1], 0]
@@ -97,6 +102,3 @@ class RedTeam(Team):
 
         self.drones = [Drone(is_blue=False, position=position, speed=speed, id_=id_)
                        for (id_, position, speed) in zip(range(len(positions)), positions, speeds)]
-
-
-
