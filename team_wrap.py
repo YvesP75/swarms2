@@ -3,6 +3,7 @@ import gym
 from gym import spaces
 
 from swarm_policy import SwarmPolicy
+from settings import Settings
 
 
 class TeamWrapper(gym.Wrapper):
@@ -10,10 +11,11 @@ class TeamWrapper(gym.Wrapper):
     :param env: (gym.Env) Gym environment that will be wrapped
     """
 
-    def __init__(self, env, is_blue: bool = True, is_double: bool = False):
+    def __init__(self, env, is_blue: bool = True, is_double: bool = False, is_unkillable: bool = Settings.is_unkillable):
 
         self.is_blue = is_blue
         self.is_double = is_double
+        self.is_unkillabe = is_unkillable
 
         nb_blues, nb_reds = env.nb_blues, env.nb_reds
 
@@ -28,7 +30,9 @@ class TeamWrapper(gym.Wrapper):
             nb_friends = nb_blues if is_blue else nb_reds
             env.action_space = spaces.Box(low=0, high=1, shape=(nb_friends*3,), dtype=np.float32)
 
-        flatten_dimension = 6 * nb_blues + 6 * nb_reds + 2 * nb_blues * nb_reds
+        flatten_dimension = 6 * nb_blues + 6 * nb_reds
+        flatten_dimension += (nb_blues * nb_reds) * (1 if is_unkillable else 2)
+
         env.observation_space = spaces.Box(low=-1, high=1, shape=(flatten_dimension,), dtype=np.float32)
 
         super(TeamWrapper, self).__init__(env)
@@ -66,6 +70,10 @@ class TeamWrapper(gym.Wrapper):
         return obs, reward, done, info
 
     def post_obs(self, obs):
+
+        if self.is_unkillabe:
+           o1, o2, o3, _ = obs
+           obs = o1, o2, o3
         flatten_obs = _flatten(obs)
         centralised_obs = _centralise(flatten_obs)
 

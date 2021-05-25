@@ -21,7 +21,7 @@ from swarmenv import SwarmEnv
 def bi_train(blue_model, red_model, blues: int = 1, reds: int = 1,
              dispersion: np.float32 = 1, total_timesteps: int = 1000):
     # Create save dir
-    save_dir = f"policies/b{blues}r{reds}/"
+    save_dir = "policies/" + Settings.policy_folder + f"/b{blues}r{reds}/"
     os.makedirs(save_dir, exist_ok=True)
 
     # set the dispersion to initial drone positions
@@ -93,5 +93,5 @@ def print_spaces(env, name: str):
 
 # meta_train(iteration=3, total_timesteps=100)
 
-# super_meta_train(max_blues=2, max_reds=3, iteration=10, max_dispersion=3, total_timesteps=1000)
-super_meta_train(max_blues=3, max_reds=3, iteration=4, max_dispersion=3, total_timesteps=120)
+#  super_meta_train(max_blues=2, max_reds=2, iteration=2, max_dispersion=2, total_timesteps=10)
+super_meta_train(max_blues=6, max_reds=6, iteration=12, max_dispersion=3, total_timesteps=10000)

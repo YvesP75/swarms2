@@ -22,6 +22,8 @@ class Settings:
     blue_circles_zed = param_.BLUE_CIRCLES_ZED
     blue_distance_factor: float = param_.BLUE_DISTANCE_FACTOR
 
+    is_unkillable: bool = param_.BLUE_IS_UNKILLABLE
+
     blue_speed_init: int = param_.BLUE_SPEED_INIT
 
     reds: int = param_.REDS
@@ -37,6 +39,8 @@ class Settings:
     red_zed_noise = np.array(param_.RED_ZED_NOISE)
 
     red_speed_init: int = param_.RED_SPEED_INIT
+
+    policy_folder: str = param_.POLICY_FOLDER
 
 
 def define_(with_streamlit: bool = True, blues: int = Settings.blues, reds: int = Settings.reds):

@@ -58,7 +58,6 @@ class Drone:
             self.position, self.speed = self.from_xyz(pos), self.from_xyz(speed)
                 
             if self._out_of_bounds():
-                self.is_alive = False
                 coef = -1 if self.is_blue else 1
                 reward = coef * param_.OOB_COST
                 # if self.is_blue:

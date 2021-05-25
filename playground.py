@@ -87,33 +87,13 @@ class Playground:
 
         # consider only living drones
         blue_drones = [drone for drone in self.blue_drones if drone.is_alive]
-        red_drones = [drone for drone in self.blue_drones if drone.is_alive]
+        red_drones = [drone for drone in self.red_drones if drone.is_alive]
 
         # check that there still are some drones alive
         if len(blue_drones) * len(red_drones) == 0:
             # print('fight is over : there are still {0} blues and {1} reds'.format(len(blue_drones), len(red_drones)))
             return 0, 0
 
-        # create a matrix that gives for each blue drone the distance to each red drone
-        rb_distance = np.array([[blue.distance(red) for red in red_drones] for blue in blue_drones])
-
-        # what count is the distance to be fired
-        rb_distance -= self.distance_blue_shot
-        rb_distance = np.clip(rb_distance, 0, np.inf)
-
-        # the distance goes through a "norm" function to give a weight of 1 to the the closest drones
-        normalised_rb_distance = np.exp(-0.5 * (rb_distance / self.distance_blue_shot) ** 2)
-
-        # each blue drone contributes a % of its capacity on pressure to red.
-        # this % is such that sum of blue weight = 1
-        sum_blue_weight = np.tile(np.sum(normalised_rb_distance, axis=1), (len(red_drones), 1)).T
-        blue_weight = normalised_rb_distance / sum_blue_weight
-
-        # the total blue pressure is added to get to pressure on each red
-        avg_blue_weight = np.sum(blue_weight, axis=0)
-
-        # this total goes through a log in order to render that the marginal weight of blue drones is decreasing
-        blue_weight_on_red = np.tanh(avg_blue_weight)
 
         # distance of red drones to 0
         r_distance = np.array([red.distance() for red in red_drones])
@@ -122,11 +102,6 @@ class Playground:
         r_distance -= Settings.groundzone
         r_distance = np.clip(r_distance, 0, np.inf)  # just in case
 
-        red_loss = np.exp(-0.5 * (r_distance / self.distance_blue_shot) ** 2)
+        red_threat = np.exp(-0.5 * (r_distance / (self.perimeter/2)) ** 2)
 
-        red_loss_weighted = red_loss * (1 - blue_weight_on_red)
-
-        total_red_loss = np.sum(red_loss)
-        total_red_loss_weighted = np.sum(red_loss_weighted)
-
-        return total_red_loss, total_red_loss_weighted
+        return np.sum(red_threat)

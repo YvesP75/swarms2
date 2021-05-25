@@ -4,11 +4,12 @@ import numpy as np
 STEP = 1  # seconds per time step
 DURATION = 1000  # seconds
 
+POLICY_FOLDER = '0525_policies'
 
-STEP_COST = 1/1000
-HEURISTIC_WEIGHT = 1/100
+STEP_COST = 0
+THREAT_WEIGHT = 1/20
 RED_COST = 1/10
-OOB_COST = 1
+OOB_COST = 1/20
 
 ELEVATION_SCALE = 1
 TRAJ_LENGTH = 6
@@ -49,6 +50,8 @@ BLUE_CIRCLES_RHO = [500, 900, 1400, 1600, 2000, 2500]
 BLUE_CIRCLES_THETA = [0, -np.pi/3, -np.pi, -np.pi/2, 0, np.pi/3]
 BLUE_CIRCLES_ZED = [300, 250, 250, 100, 250, 100]
 BLUE_DISTANCE_FACTOR = 1
+
+BLUE_IS_UNKILLABLE = True
 
 
 BLUE_SPEED_INIT = 1  # in ratio to max_speed
@@ -101,7 +104,7 @@ DRONE_MODELS = {
      'beta': {
           'angle_to_neutralisation': np.pi / 4,
           'distance_to_neutralisation': 250,
-          'duration_to_neutralisation': 2,
+          'duration_to_neutralisation': np.inf,
           'Cxy': 0.3,  # horizontal air resistance : link to speed max by the relation Fxy_max = Cxy * Speedxy_max
           'Cz': 0.8,  # vertical air resistance : link to speed max by the relation Fz_max = Cz * Speedz_max
           'mass': 40,  # kg
