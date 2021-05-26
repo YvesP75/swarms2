@@ -16,10 +16,11 @@ class SwarmPolicy:
 
     def __post_init__(self):
 
-        dir_path = "policies/"+Settings.policy_folder+f"/b{self.blues}r{self.reds}/"
+        dir_path = "policies/last" + f"/b{self.blues}r{self.reds}/"
         model_path = dir_path + ("blues_last.zip" if self.is_blue else "reds_last.zip")
         if path.exists(model_path):
-            self.model = SAC.load(model_path, verbose=0)
+            print(model_path)
+            self.model = SAC.load(model_path, verbose=1)
 
     # predicts from the model or from an simple centripete model
     def predict(self, obs):

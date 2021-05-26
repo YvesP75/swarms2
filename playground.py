@@ -89,18 +89,17 @@ class Playground:
         blue_drones = [drone for drone in self.blue_drones if drone.is_alive]
         red_drones = [drone for drone in self.red_drones if drone.is_alive]
 
-        # check that there still are some drones alive
-        if len(blue_drones) * len(red_drones) == 0:
-            # print('fight is over : there are still {0} blues and {1} reds'.format(len(blue_drones), len(red_drones)))
-            return 0, 0
+        # check that there still are red drones alive
+        if len(red_drones) == 0:
+            return 1  # mission accomplished, blues have won
 
+        # check that there still are blue drones alive
+        if len(blue_drones) == 0:
+            # print('fight is over : there are still {0} blues and {1} reds'.format(len(blue_drones), len(red_drones)))
+            return -1  # mission failed, blues have lost
 
         # distance of red drones to 0
         r_distance = np.array([red.distance() for red in red_drones])
-
-        # distance of red drones to the groundzone (a priori, it should be impossible to have a negative r_distance)
-        r_distance -= Settings.groundzone
-        r_distance = np.clip(r_distance, 0, np.inf)  # just in case
 
         red_threat = np.exp(-0.5 * (r_distance / (self.perimeter/2)) ** 2)
 

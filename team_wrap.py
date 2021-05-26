@@ -30,8 +30,8 @@ class TeamWrapper(gym.Wrapper):
             nb_friends = nb_blues if is_blue else nb_reds
             env.action_space = spaces.Box(low=0, high=1, shape=(nb_friends*3,), dtype=np.float32)
 
-        flatten_dimension = 6 * nb_blues + 6 * nb_reds
-        flatten_dimension += (nb_blues * nb_reds) * (1 if is_unkillable else 2)
+        flatten_dimension = 6 * nb_blues + 6 * nb_reds  # the position and speeds for blue and red drones
+        flatten_dimension += (nb_blues * nb_reds) * (1 if is_unkillable else 2)  # the fire matrices
 
         env.observation_space = spaces.Box(low=-1, high=1, shape=(flatten_dimension,), dtype=np.float32)
 

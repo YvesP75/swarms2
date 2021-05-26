@@ -29,6 +29,7 @@ class SwarmEnv(gym.Env):
         self.playground = Playground(env=self, blue_drones=self.blue_team.drones, red_drones=self.red_team.drones)
 
         self.threat = self.playground.heuristic()
+        self.steps = 0
 
         self.observation_space = spaces.Tuple((
             spaces.Box(low=0, high=1, shape=(self.nb_blues, 6), dtype=np.float32),
@@ -55,6 +56,7 @@ class SwarmEnv(gym.Env):
         self.blue_team.reset(obs=blue_obs)
         self.red_team.reset(obs=red_obs)
         self.playground.reset()
+        self.steps = 0
 
         # get observations from blue and red teams
         blue_obs, blue_deads = self.blue_team.get_observation()
@@ -75,11 +77,14 @@ class SwarmEnv(gym.Env):
         _, red_deads = self.red_team.get_observation()
         obs = blue_obs, red_obs, bf_obs, rf_obs, blue_deads, red_deads
         reward = blue_reward + red_reward + bf_reward + rf_reward
-        done = bool(blue_done * red_done * bf_done * rf_done)
+        done = bool(blue_done + red_done + bf_done + rf_done)
         info = {}
-        new_threat = self.playground.heuristic()
-        delta_threat = new_threat - self.threat
-        self.threat = new_threat
+        if done:
+            reward = self.playground.heuristic()
+        else:
+            new_threat = self.playground.heuristic()
+            delta_threat = new_threat - self.threat
+            self.threat = new_threat
+            reward -= delta_threat * param_.THREAT_WEIGHT
 
-        reward -= delta_threat * param_.THREAT_WEIGHT
         return obs, reward, done, info

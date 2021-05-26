@@ -2,7 +2,7 @@
 import numpy as np
 
 STEP = 1  # seconds per time step
-DURATION = 1000  # seconds
+DURATION = 100  # seconds
 
 POLICY_FOLDER = '0525_policies'
 
