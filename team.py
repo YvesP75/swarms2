@@ -16,8 +16,11 @@ class Team:
     is_blue: bool
     drones: [Drone]
     drone_model: DroneModel
+    weighted_distance: float = 0
 
     def reset(self, obs=None):
+
+        self.delta_weighted_distance()
         if obs:
             for drone, obs in zip(self.drones, obs):
                 drone.reset(obs=obs)
@@ -47,16 +50,20 @@ class Team:
         for i in infos:
             info['oob'] += i['oob'] if 'oob' in i else 0
             info['hits_target'] += i['hits_target'] if 'hits_target' in i else 0
+            info['delta_distance'] = 0 if self.is_blue else self.delta_weighted_distance()
         return obs, sum(reward), done, info
 
-    def weighted_distance(self):
+    def delta_weighted_distance(self):
 
-        # distance of red drones to 0
+        # distance of drones to 0
         team_distance = np.array([d.distance() for d in self.drones if d.is_alive])
+        weighted_distance = np.sum(np.exp(-0.5 * (team_distance / (Settings.perimeter/2)) ** 2))
 
-        weighted_distance = np.sum (np.exp(-0.5 * (team_distance / (Settings.perimeter/2)) ** 2))
+        delta = weighted_distance - self.weighted_distance if 0 < self.weighted_distance else 0
 
-        return weighted_distance
+        self.weighted_distance = weighted_distance
+
+        return delta
 
 
 class BlueTeam(Team):

@@ -36,13 +36,13 @@ def bi_train(blue_model, red_model, blues: int = 1, reds: int = 1,
     # launch learning for red drones and then blue drones
     red_model.learn(total_timesteps=total_timesteps)
     mean_reward, std_reward = evaluate_policy(red_model, red_model.env, n_eval_episodes=10)
-    print(f"REDS : mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+    print(f"REDS b{blues}r{reds} disp_b:{blue_dispersion} disp_r{red_dispersion}: mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
     red_model.save(save_dir + f"reds_b{10 * blue_dispersion:2.0f}r{10 * red_dispersion:2.0f}")
     red_model.save(save_last_dir + "reds_last")
 
     blue_model.learn(total_timesteps=total_timesteps)
     mean_reward, std_reward = evaluate_policy(blue_model, blue_model.env, n_eval_episodes=10)
-    print(f"BLUES : mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+    print(f"BLUES b{blues}r{reds} disp_b:{blue_dispersion} disp_r{red_dispersion}: mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
     blue_model.save(save_dir + f"blues_{10 * blue_dispersion:2.0f}r{10 * red_dispersion:2.0f}")
     blue_model.save(save_last_dir + "blues_last")
 
@@ -69,8 +69,8 @@ def meta_train(blues: int = 1, reds: int = 1,
     blue_env = TeamWrapper(env, is_blue=True)
     red_env = TeamWrapper(env, is_blue=False)
 
-    blue_model = SAC(MlpPolicy, blue_env, verbose=1)
-    red_model = SAC(MlpPolicy, red_env, verbose=1)
+    blue_model = SAC(MlpPolicy, blue_env, verbose=0)
+    red_model = SAC(MlpPolicy, red_env, verbose=0)
 
     for red_dispersion in np.linspace(0.3, max_dispersion, num=iteration):
         for blue_dispersion in np.linspace(max_dispersion, 0.3, num=iteration):
@@ -101,7 +101,5 @@ def print_spaces(env, name: str):
     check_env(env, warn=True)
 
 
-# super_meta_train(max_blues=2, max_reds=2, iteration=2, max_dispersion=2, total_timesteps=10)
-super_meta_train(max_blues=2, max_reds=2, iteration=5, max_dispersion=3, total_timesteps=5000, policy_folder="0527_15")
-
-# super_meta_train(max_blues=2, max_reds=2, iteration=4, max_dispersion=3, total_timesteps=10, policy_folder="0526_test")
+# super_meta_train(max_blues=2, max_reds=2, iteration=2, max_dispersion=2, total_timesteps=10)super_meta_train(max_blues=2, max_reds=2, iteration=5, max_dispersion=3, total_timesteps=5000, policy_folder="0527_16")
+super_meta_train(max_blues=2, max_reds=2, iteration=4, max_dispersion=3, total_timesteps=10, policy_folder="0526_test")

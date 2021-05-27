@@ -80,13 +80,14 @@ class SwarmEnv(gym.Env):
 
 
 
+
         info = {}
         info['red_oob'] = red_info['oob']
         info['blue_oob'] = blue_info['oob']
         info['hits_target'] = red_info['hits_target']
         info['blue_shots'] = rf_info
         info['red_shots'] = bf_info
-        info['weighted_red_distance'] = self.red_team.weighted_distance()
+        info['weighted_red_distance'] = red_info['delta_distance']
         info['red_loses'] = bf_done
         info['blue_loses'] = rf_done
 

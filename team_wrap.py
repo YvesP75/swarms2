@@ -17,7 +17,7 @@ class TeamWrapper(gym.Wrapper):
         self.is_blue = is_blue
         self.is_double = is_double
         self.is_unkillabe = is_unkillable
-        self.info = {}
+
 
         nb_blues, nb_reds = env.nb_blues, env.nb_reds
 
