@@ -46,11 +46,15 @@ class SwarmPolicy:
             action_d = drone.simple_red()
             action = np.hstack((action, action_d))
 
-        del drone  # the drone was created for positions manipulations
-
-        return np.array(action)
+        action = _centralise(action)
+        return action
 
 
 def _decentralise(obs):  # [-1,1] to [0,1]
     obs = (obs+1)/2
     return obs
+
+
+def _centralise(act):  #  [0,1] to [-1,1]
+    act = (act - 1/2) * 2
+    return act

@@ -1,6 +1,6 @@
 # swarms2
 
-red swarms against blue swarms
+**red swarms against blue swarms**
 reds attack a target defended by blues
 reds and blues may kill their opponent
 the more drones reach the goal, the better for the reds and the worst for the blues
@@ -14,7 +14,7 @@ two files contain the starting points :
 train.py allows for training
 show.py launches the streamlit app
 
-train.py
+**train.py**
 the training is done iteratively by starting with one blue drone and one red drone, increasing distance progressively and adding drones.
 Learned policies are stored in /policies/
 For each configuration depending on the number of blue and red drones, there is a folder containing the red and blue policies
@@ -26,9 +26,13 @@ which programs a training from 1,1 to 8,8 drones, with a distance mutltiplier of
 (1 step = 1 second)
 
 
-show.py
+**show.py**
 once the agents are trained, the drones can be simulated and visible through a streamlit interface.
 the command to launch the visualisation is :
 streamlit run show.py
 
 
+**tuning the rewards**
+The rewards may be tuned in the _param.py file and logic is in the team_wrap.py file in the 'evaluate_situation' function.
+When is_double is true, means that there is no learning: simulation is carried out with already defined policies. Only the final outcome is to be considered.
+Otherwise, two cases have to be taken into account, whether blue or red is learning

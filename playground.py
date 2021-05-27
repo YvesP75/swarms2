@@ -73,34 +73,18 @@ class Playground:
         for drone_id in red_deads:
             self.red_drones[drone_id].is_killed(is_blue=False)
 
+        # consider only living drones
+        blue_drones = [drone for drone in self.blue_drones if drone.is_alive]
+        red_drones = [drone for drone in self.red_drones if drone.is_alive]
+
         bf_obs, rf_obs = self.get_observation()
         bf_reward = rf_reward = 0
-        bf_done, rf_done = len(red_deads), len(blue_deads)
-        bf_info, rf_info = red_deads, blue_deads
+        bf_done, rf_done = len(red_drones) == 0, len(blue_drones) == 0
+        bf_info, rf_info = len(red_deads), len(blue_deads)
 
         # if bf_done + rf_done > 0:
         #    print('someone is killed: {0} blues and {1} reds'.format(rf_done, bf_done))
 
         return bf_obs, bf_reward, bf_done, bf_info, rf_obs, rf_reward, rf_done, rf_info
 
-    def heuristic(self):
 
-        # consider only living drones
-        blue_drones = [drone for drone in self.blue_drones if drone.is_alive]
-        red_drones = [drone for drone in self.red_drones if drone.is_alive]
-
-        # check that there still are red drones alive
-        if len(red_drones) == 0:
-            return 1  # mission accomplished, blues have won
-
-        # check that there still are blue drones alive
-        if len(blue_drones) == 0:
-            # print('fight is over : there are still {0} blues and {1} reds'.format(len(blue_drones), len(red_drones)))
-            return -1  # mission failed, blues have lost
-
-        # distance of red drones to 0
-        r_distance = np.array([red.distance() for red in red_drones])
-
-        red_threat = np.exp(-0.5 * (r_distance / (self.perimeter/2)) ** 2)
-
-        return np.sum(red_threat)

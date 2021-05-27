@@ -59,13 +59,16 @@ def define_(with_streamlit: bool = True, blues: int = Settings.blues, reds: int 
         st.sidebar.subheader("Define the battlefield")
         blues = st.sidebar.slider("how many blues on defense?", 1, 12)
         Settings.blues = blues
+        blue_dispersion = st.sidebar.slider("set the average blue dispersion", 0.1, 1.0)
+        Settings.reds = reds
         reds = st.sidebar.slider("how many reds are on the attack?", 1, 12)
-        Settings.blues = reds
-        dispersion = st.sidebar.slider("set the average dispersion", 1.0, 3.0)
-        Settings.blue_distance_factor = Settings.red_distance_factor = dispersion
+        Settings.reds = reds
+        red_dispersion = st.sidebar.slider("set the average red dispersion", 0.1, 1.0)
+
+        Settings.blue_distance_factor = 3 * blue_dispersion
+        Settings.red_distance_factor = 3 * red_dispersion
 
         location = st.sidebar.radio("Location", ['Paris', 'Puilaurens', 'San Francisco'])
-
 
         lat_tg = param_.LATLON[location]['lat']
         lon_tg = param_.LATLON[location]['lon']

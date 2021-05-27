@@ -50,6 +50,7 @@ class Drone:
     def step(self, action):
         self.step_ = self.step_ + 1  # for debug purposes
         reward = 0
+        info = {}
         if self.is_alive:  # if the drone is dead, it no longer moves :)
             pos_xyz, speed_xyz = self.to_xyz(self.position), self.to_xyz(self.speed)
             pos_s, speed_s = \
@@ -60,13 +61,16 @@ class Drone:
             if self._out_of_bounds():
                 coef = -1 if self.is_blue else 1
                 reward = coef * param_.OOB_COST
+                self.is_alive = False
+                info['oob'] = 1
                 # if self.is_blue:
                 #    print("another blue is oob")
                 # else:
                 #   print("another red is oob")
             else:
                 if self._hits_target():
-                    reward = -param_.RED_COST
+                    info['hits_target'] = 1
+                    reward = -param_.TARGET_HIT_COST
                 #    print("another red hits the target")
                     self.color = param_.RED_SUCCESS_COLOR
                     self.is_alive = False  # the red has done its job ...
@@ -74,7 +78,7 @@ class Drone:
         obs = self.get_observation()
         done = not self.is_alive
 
-        return obs, reward, done, 0
+        return obs, reward, done, info
 
     def _out_of_bounds(self):
         return not (0 < self.position[2] < Settings.perimeter_z and self.position[1] < Settings.perimeter)

@@ -18,7 +18,10 @@ import param_
 from swarmenv import SwarmEnv
 
 
-def run(with_streamlit=True, blues: int = 1, reds: int = 1):
+def run(with_streamlit=True, blues: int = 1, reds: int = 1, policy_folder: str = 'last'):
+
+    # define the policy folder is: where the trained policies are to be found
+    Settings.policy_folder = policy_folder
 
     # define settings with Streamlit (or use default parameters)
     blues, reds = define_(with_streamlit=with_streamlit, blues=blues, reds=reds)
@@ -164,5 +167,5 @@ def get_path_layers(df_path: pd.DataFrame, step: int) -> [pdk.Layer]:
 
 
 # and ... do not forget
-run(with_streamlit=True)
-# run(blues=1, reds=3, with_streamlit=False)
+run(with_streamlit=True, policy_folder='0527_14_test')
+# run(blues=1, reds=3, with_streamlit=False, policy_folder='0527_14_test')

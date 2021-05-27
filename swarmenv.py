@@ -28,7 +28,6 @@ class SwarmEnv(gym.Env):
 
         self.playground = Playground(env=self, blue_drones=self.blue_team.drones, red_drones=self.red_team.drones)
 
-        self.threat = self.playground.heuristic()
         self.steps = 0
 
         self.observation_space = spaces.Tuple((
@@ -77,14 +76,19 @@ class SwarmEnv(gym.Env):
         _, red_deads = self.red_team.get_observation()
         obs = blue_obs, red_obs, bf_obs, rf_obs, blue_deads, red_deads
         reward = blue_reward + red_reward + bf_reward + rf_reward
-        done = bool(blue_done + red_done + bf_done + rf_done)
+        done = False
+
+
+
         info = {}
-        if done:
-            reward = self.playground.heuristic()
-        else:
-            new_threat = self.playground.heuristic()
-            delta_threat = new_threat - self.threat
-            self.threat = new_threat
-            reward -= delta_threat * param_.THREAT_WEIGHT
+        info['red_oob'] = red_info['oob']
+        info['blue_oob'] = blue_info['oob']
+        info['hits_target'] = red_info['hits_target']
+        info['blue_shots'] = rf_info
+        info['red_shots'] = bf_info
+        info['weighted_red_distance'] = self.red_team.weighted_distance()
+        info['red_loses'] = bf_done
+        info['blue_loses'] = rf_done
+
 
         return obs, reward, done, info

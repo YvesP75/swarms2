@@ -39,10 +39,24 @@ class Team:
         obs = np.zeros((len(self.drones), 6))
         done = np.zeros((len(self.drones),))
         reward = np.zeros((len(self.drones),))
+        infos = [{} for d in range(len(self.drones))]
         for index, drone in enumerate(self.drones):
-            obs[index], reward[index], done[index], _ = drone.step(action[index])
+            obs[index], reward[index], done[index], infos[index] = drone.step(action[index])
         done = (sum(done) == len(self.drones))
-        return obs, sum(reward), done, 0
+        info = {'oob': 0, 'hits_target': 0}
+        for i in infos:
+            info['oob'] += i['oob'] if 'oob' in i else 0
+            info['hits_target'] += i['hits_target'] if 'hits_target' in i else 0
+        return obs, sum(reward), done, info
+
+    def weighted_distance(self):
+
+        # distance of red drones to 0
+        team_distance = np.array([d.distance() for d in self.drones if d.is_alive])
+
+        weighted_distance = np.sum (np.exp(-0.5 * (team_distance / (Settings.perimeter/2)) ** 2))
+
+        return weighted_distance
 
 
 class BlueTeam(Team):

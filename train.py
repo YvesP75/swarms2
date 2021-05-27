@@ -20,7 +20,7 @@ import param_
 
 
 def bi_train(blue_model, red_model, blues: int = 1, reds: int = 1,
-             dispersion: np.float32 = 1, total_timesteps: int = 1000):
+             blue_dispersion: np.float32 = 1, red_dispersion: np.float32 = 1, total_timesteps: int = 1000):
     # If needed create save dir
     save_dir = "policies/" + Settings.policy_folder + f"/b{blues}r{reds}/"
     save_last_dir = "policies/last" + f"/b{blues}r{reds}/"
@@ -28,23 +28,23 @@ def bi_train(blue_model, red_model, blues: int = 1, reds: int = 1,
     os.makedirs(save_last_dir, exist_ok=True)
 
     # set the dispersion to initial drone positions
-    Settings.blue_distance_factor = dispersion * Settings.blue_distance_factor
-    Settings.red_distance_factor = dispersion * Settings.red_distance_factor
-    Settings.red_theta_noise = dispersion * Settings.red_theta_noise
-    Settings.red_rho_noise = dispersion * Settings.red_rho_noise
+    Settings.blue_distance_factor = blue_dispersion * Settings.blue_distance_factor
+    Settings.red_distance_factor = blue_dispersion * Settings.red_distance_factor
+    Settings.red_theta_noise = red_dispersion * Settings.red_theta_noise
+    Settings.red_rho_noise = red_dispersion * Settings.red_rho_noise
 
-    # launch learning for blue drones and then red drones
-    blue_model.learn(total_timesteps=total_timesteps)
-    mean_reward, std_reward = evaluate_policy(blue_model, blue_model.env, n_eval_episodes=10)
-    print(f"BLUES : mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
-    blue_model.save(save_dir + f"blues_{10*dispersion:2.0f}")
-    blue_model.save(save_last_dir + "blues_last")
-
+    # launch learning for red drones and then blue drones
     red_model.learn(total_timesteps=total_timesteps)
     mean_reward, std_reward = evaluate_policy(red_model, red_model.env, n_eval_episodes=10)
     print(f"REDS : mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
-    red_model.save(save_dir + f"reds_{10*dispersion:2.0f}")
+    red_model.save(save_dir + f"reds_b{10 * blue_dispersion:2.0f}r{10 * red_dispersion:2.0f}")
     red_model.save(save_last_dir + "reds_last")
+
+    blue_model.learn(total_timesteps=total_timesteps)
+    mean_reward, std_reward = evaluate_policy(blue_model, blue_model.env, n_eval_episodes=10)
+    print(f"BLUES : mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+    blue_model.save(save_dir + f"blues_{10 * blue_dispersion:2.0f}r{10 * red_dispersion:2.0f}")
+    blue_model.save(save_last_dir + "blues_last")
 
     return blue_model, red_model
 
@@ -52,7 +52,6 @@ def bi_train(blue_model, red_model, blues: int = 1, reds: int = 1,
 def meta_train(blues: int = 1, reds: int = 1,
                max_dispersion: np.float32 = 3, iteration: int = 10,
                total_timesteps: int = 100):
-
     Settings.blues, Settings.reds = blues, reds
 
     # launch the episode to get the data
@@ -73,16 +72,19 @@ def meta_train(blues: int = 1, reds: int = 1,
     blue_model = SAC(MlpPolicy, blue_env, verbose=1)
     red_model = SAC(MlpPolicy, red_env, verbose=1)
 
-    for dispersion in np.linspace(0.3, max_dispersion, num=iteration):
-        blue_model, red_model = bi_train(
-            blue_model, red_model, blues=blues, reds=reds, dispersion=dispersion, total_timesteps=total_timesteps)
+    for red_dispersion in np.linspace(0.3, max_dispersion, num=iteration):
+        for blue_dispersion in np.linspace(max_dispersion, 0.3, num=iteration):
+            blue_model, red_model = bi_train(
+                blue_model, red_model, blues=blues, reds=reds,
+                blue_dispersion=blue_dispersion, red_dispersion=red_dispersion,
+                total_timesteps=total_timesteps)
 
 
 def super_meta_train(max_blues: int = 3, max_reds: int = 3, max_dispersion: np.float32 = 3,
                      iteration: int = 10, total_timesteps: int = 100, policy_folder: str = "default"):
     Settings.policy_folder = policy_folder
-    for drones_nb in range(3, max_blues+max_reds+1):
-        for blues in range(2, max_blues+1):
+    for drones_nb in range(2, max_blues + max_reds + 1):
+        for blues in range(1, max_blues + 1):
             reds = drones_nb - blues
             if 1 <= reds <= max_reds:
                 print(f"reds :{reds}, blues: {blues}")
@@ -99,9 +101,7 @@ def print_spaces(env, name: str):
     check_env(env, warn=True)
 
 
-# meta_train(iteration=3, total_timesteps=100)
-
-#  super_meta_train(max_blues=2, max_reds=2, iteration=2, max_dispersion=2, total_timesteps=10)
-super_meta_train(max_blues=5, max_reds=5, iteration=10, max_dispersion=3, total_timesteps=5000, policy_folder="0526_07")
+# super_meta_train(max_blues=2, max_reds=2, iteration=2, max_dispersion=2, total_timesteps=10)
+super_meta_train(max_blues=2, max_reds=2, iteration=5, max_dispersion=3, total_timesteps=5000, policy_folder="0527_15")
 
 # super_meta_train(max_blues=2, max_reds=2, iteration=4, max_dispersion=3, total_timesteps=10, policy_folder="0526_test")

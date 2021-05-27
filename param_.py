@@ -2,14 +2,17 @@
 import numpy as np
 
 STEP = 1  # seconds per time step
-DURATION = 100  # seconds
+DURATION = 200  # seconds
 
 POLICY_FOLDER = '0525_policies'
 
-STEP_COST = 0
-THREAT_WEIGHT = 1/20
-RED_COST = 1/10
-OOB_COST = 1/20
+STEP_COST = 1/100
+OOB_COST = 10  # Out Of Bound : when the drone is below 0 or above a PERIMETER_Z
+WIN_REWARD = 10  # either Blues or Reds have won
+RED_SHOT_REWARD = 1/10  # when a red drone is shot
+TARGET_HIT_COST = 1/10  # when a red drone hits the target
+THREAT_WEIGHT = 1/100  # when reds are close to the target (* function of the red distance)
+
 
 ELEVATION_SCALE = 1
 TRAJ_LENGTH = 6
@@ -64,13 +67,13 @@ BLUE_DEAD_COLOR = [20, 20, 60]
 REDS = 12
 
 RED_SQUADS = [3, 3, 3, 3, 3, 3]
-RED_SQUADS_RHO = [700, 1000, 1400, 1800, 2200, 2600]
-RED_SQUADS_THETA = np.pi * np.array([0, 1/4, -1/4, -1/2, 1/2, 0])
+RED_SQUADS_RHO = [300, 700, 1000, 1200, 1500, 2000]
+RED_SQUADS_THETA = np.pi * np.array([-1/2, 1/4, -1/4, -1/2, 1/2, 0])
 RED_SQUADS_ZED = [300, 250, 100, 250, 200, 100]
 RED_DISTANCE_FACTOR = 1
 
-RED_RHO_NOISE = [50, 50, 50, 200, 200, 300]
-RED_THETA_NOISE = np.pi * np.array([1/4, 1/4, 1/4, 1/4, 1/4, 1/4])
+RED_RHO_NOISE = [200, 300, 200, 200, 200, 300]
+RED_THETA_NOISE = np.pi * np.array([2, 2, 1, 1, 1, 1])
 RED_ZED_NOISE = [20, 50, 10, 10, 50, 60]
 
 RED_SPEED_INIT = 0.0  # in ratio to max_speed
