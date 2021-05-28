@@ -46,8 +46,9 @@ class Team:
         for index, drone in enumerate(self.drones):
             obs[index], reward[index], done[index], infos[index] = drone.step(action[index])
         done = (sum(done) == len(self.drones))
-        info = {'oob': 0, 'hits_target': 0}
+        info = {'oob': 0, 'hits_target': 0, 'ttl': param_.DURATION}
         for i in infos:
+            info['ttl'] = min(info['ttl'], i['ttl'])
             info['oob'] += i['oob'] if 'oob' in i else 0
             info['hits_target'] += i['hits_target'] if 'hits_target' in i else 0
             info['delta_distance'] = 0 if self.is_blue else self.delta_weighted_distance()

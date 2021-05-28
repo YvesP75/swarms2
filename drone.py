@@ -24,6 +24,7 @@ class Drone:
     fires = 0
     step_ = 0
     id_: int = -1
+    ttl: float = param_.DURATION  # ttl = Time To Live expressed in seconds
     speed: np.ndarray((3,)) = np.zeros((3,))
     min_positions = np.zeros((3,))
     max_positions = np.array([Settings.perimeter, 2*np.pi, Settings.perimeter_z])
@@ -40,6 +41,7 @@ class Drone:
         self.init_position = self.position
         self.init_speed = self.speed
         self.color = param_.BLUE_COLOR if self.is_blue else param_.RED_COLOR
+        self.ttl = self.position[0] / self.max_speeds[0] * param_.TTL_RATIO
 
     def reset(self):
         self.is_alive = True
@@ -50,13 +52,15 @@ class Drone:
     def step(self, action):
         self.step_ = self.step_ + 1  # for debug purposes
         reward = 0
-        info = {}
+        info = {'ttl': param_.DURATION}
         if self.is_alive:  # if the drone is dead, it no longer moves :)
             pos_xyz, speed_xyz = self.to_xyz(self.position), self.to_xyz(self.speed)
             pos_s, speed_s = \
                 self.drone_model.get_trajectory(pos_xyz, speed_xyz, action, np.linspace(0, param_.STEP, 10))
             pos, speed = pos_s.T[-1], speed_s.T[-1]
             self.position, self.speed = self.from_xyz(pos), self.from_xyz(speed)
+            self.ttl -= param_.STEP
+            info['ttl'] = self.ttl
                 
             if self._out_of_bounds():
                 coef = -1 if self.is_blue else 1

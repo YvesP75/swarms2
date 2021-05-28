@@ -13,6 +13,7 @@ from symetry_wrap import SymetryWrapper
 from rotate_wrap import RotateWrapper
 from sort_wrap import SortWrapper
 from team_wrap import TeamWrapper
+from reward_wrap import RewardWrapper
 
 from settings import Settings
 from swarmenv import SwarmEnv
@@ -66,8 +67,8 @@ def meta_train(blues: int = 1, reds: int = 1,
                             MonitorWrapper(
                                 SwarmEnv(blues=blues, reds=reds), steps, verbose=False)))))))
 
-    blue_env = TeamWrapper(env, is_blue=True)
-    red_env = TeamWrapper(env, is_blue=False)
+    blue_env = RewardWrapper(TeamWrapper(env, is_blue=True), is_blue=True)
+    red_env = RewardWrapper(TeamWrapper(env, is_blue=False), is_blue=False)
 
     blue_model = SAC(MlpPolicy, blue_env, verbose=0)
     red_model = SAC(MlpPolicy, red_env, verbose=0)
@@ -101,5 +102,5 @@ def print_spaces(env, name: str):
     check_env(env, warn=True)
 
 
-# super_meta_train(max_blues=2, max_reds=2, iteration=2, max_dispersion=2, total_timesteps=10)super_meta_train(max_blues=2, max_reds=2, iteration=5, max_dispersion=3, total_timesteps=5000, policy_folder="0527_16")
-super_meta_train(max_blues=2, max_reds=2, iteration=4, max_dispersion=3, total_timesteps=10, policy_folder="0526_test")
+super_meta_train(max_blues=1, max_reds=1, iteration=6, max_dispersion=2, total_timesteps=5000, policy_folder="0528_10")
+# super_meta_train(max_blues=2, max_reds=2, iteration=4, max_dispersion=3, total_timesteps=10, policy_folder="0528_test")

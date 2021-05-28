@@ -2,7 +2,6 @@ import numpy as np
 import gym
 from gym import spaces
 
-import param_
 from swarm_policy import SwarmPolicy
 from settings import Settings
 
@@ -72,8 +71,6 @@ class TeamWrapper(gym.Wrapper):
 
         obs = self.post_obs(obs)
 
-        reward, done, info = self.situation_evaluation(reward, info)
-
         return obs, reward, done, info
 
     def post_obs(self, obs):
@@ -88,42 +85,6 @@ class TeamWrapper(gym.Wrapper):
             self.foe_action = self.foe_policy.predict(centralised_obs)
 
         return centralised_obs
-
-    def situation_evaluation(self, reward, info):
-
-        if self.is_double:
-            if info['red_loses'] or info['blue_loses']:
-                return 0, True, info
-            else:
-                return 0, False, info
-
-        else:
-            if self.is_blue:
-                if info['red_loses']:
-                    return param_.WIN_REWARD, True, info
-                if info['blue_loses']:
-                    return -param_.WIN_REWARD, True, info
-                if 0 < info['blue_oob']:
-                    return -param_.OOB_COST, True, info
-                # else continues
-                reward = -param_.STEP_COST
-                reward -= info['weighted_red_distance'] * param_.THREAT_WEIGHT
-                reward -= info['hits_target'] * param_.TARGET_HIT_COST
-                reward += info['red_shots'] * param_.RED_SHOT_REWARD
-                return reward, False, info
-            else:  # red is learning
-                if info['red_loses']:
-                    return -param_.WIN_REWARD, True, info
-                if info['blue_loses']:
-                    return param_.WIN_REWARD, True, info
-                if 0 < info['red_oob']:
-                    return -param_.OOB_COST, True, info
-                # else continues
-                reward = -param_.STEP_COST
-                reward += info['weighted_red_distance'] * param_.THREAT_WEIGHT
-                reward += info['hits_target'] * param_.TARGET_HIT_COST
-                reward -= info['red_shots'] * param_.RED_SHOT_REWARD
-                return reward, False, info
 
 
 def _unflatten(action):

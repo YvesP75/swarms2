@@ -9,6 +9,7 @@ from rotate_wrap import RotateWrapper
 from symetry_wrap import SymetryWrapper
 from sort_wrap import SortWrapper
 from team_wrap import TeamWrapper
+from reward_wrap import RewardWrapper
 
 
 class DistriWrapper(gym.Wrapper):
@@ -83,7 +84,7 @@ class DistriWrapper(gym.Wrapper):
             env = SortWrapper(env)
             obs_ = env.post_obs(obs_)
 
-            env = TeamWrapper(env, is_double=True)
+            env = RewardWrapper(TeamWrapper(env, is_double=True), is_double=True)
             obs_ = env.post_obs(obs_)
 
             _, reward, done, info = run_episode(env, obs_, blues=blues, reds=reds)
