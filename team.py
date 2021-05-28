@@ -46,12 +46,13 @@ class Team:
         for index, drone in enumerate(self.drones):
             obs[index], reward[index], done[index], infos[index] = drone.step(action[index])
         done = (sum(done) == len(self.drones))
-        info = {'oob': 0, 'hits_target': 0, 'ttl': param_.DURATION}
+        info = {'oob': 0, 'hits_target': 0, 'ttl': param_.DURATION, 'distance_to_straight_action': 0}
         for i in infos:
             info['ttl'] = min(info['ttl'], i['ttl'])
             info['oob'] += i['oob'] if 'oob' in i else 0
             info['hits_target'] += i['hits_target'] if 'hits_target' in i else 0
             info['delta_distance'] = 0 if self.is_blue else self.delta_weighted_distance()
+            info['distance_to_straight_action'] += i['distance_to_straight_action']
         return obs, sum(reward), done, info
 
     def delta_weighted_distance(self):
@@ -115,7 +116,11 @@ class RedTeam(Team):
                             + np.random.rand() * Settings.red_rho_noise[squad],
                                 param_.PERIMETER),
                             Settings.red_squads_theta[squad] + np.random.rand() * Settings.red_theta_noise[squad],
-                            Settings.red_squads_zed[squad] + np.random.rand() * Settings.red_zed_noise[squad]]
+                            np.clip(
+                                (Settings.red_squads_zed[squad]+np.random.rand()*Settings.red_zed_noise[squad]) *
+                                Settings.red_distance_factor,
+                                0,
+                                param_.PERIMETER_Z)]
             speeds[d] = [speed_rho, np.pi + positions[d][1], 0]
             index += 1
             if index == Settings.red_squads[squad]:

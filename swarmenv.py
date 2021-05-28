@@ -78,9 +78,6 @@ class SwarmEnv(gym.Env):
         reward = blue_reward + red_reward + bf_reward + rf_reward
         done = False
 
-
-
-
         info = {}
         info['red_oob'] = red_info['oob']
         info['blue_oob'] = blue_info['oob']
@@ -88,9 +85,10 @@ class SwarmEnv(gym.Env):
         info['blue_shots'] = rf_info
         info['red_shots'] = bf_info
         info['weighted_red_distance'] = red_info['delta_distance']
-        info['red_loses'] = bf_done
-        info['blue_loses'] = rf_done
+        info['remaining reds'] = bf_done
+        info['remaining blues'] = rf_done
         info['ttl'] = red_info['ttl']
+        info['distance_to_straight_action'] = red_info['distance_to_straight_action']
 
 
         return obs, reward, done, info

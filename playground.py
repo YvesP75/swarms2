@@ -79,7 +79,7 @@ class Playground:
 
         bf_obs, rf_obs = self.get_observation()
         bf_reward = rf_reward = 0
-        bf_done, rf_done = len(red_drones) == 0, len(blue_drones) == 0
+        bf_done, rf_done = len(red_drones), len(blue_drones)
         bf_info, rf_info = len(red_deads), len(blue_deads)
 
         # if bf_done + rf_done > 0:

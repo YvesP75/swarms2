@@ -4,7 +4,6 @@ from stable_baselines3 import SAC
 from os import path
 
 from drone import Drone
-from settings import Settings
 
 
 @dataclass
@@ -19,7 +18,7 @@ class SwarmPolicy:
         dir_path = "policies/last" + f"/b{self.blues}r{self.reds}/"
         model_path = dir_path + ("blues_last.zip" if self.is_blue else "reds_last.zip")
         if path.exists(model_path):
-            print(model_path)
+            print("model loaded:" + model_path)
             self.model = SAC.load(model_path, verbose=1)
 
     # predicts from the model or from an simple centripete model
@@ -55,6 +54,6 @@ def _decentralise(obs):  # [-1,1] to [0,1]
     return obs
 
 
-def _centralise(act):  #  [0,1] to [-1,1]
+def _centralise(act):  # [0,1] to [-1,1]
     act = (act - 1/2) * 2
     return act

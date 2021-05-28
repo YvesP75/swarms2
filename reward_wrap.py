@@ -59,19 +59,28 @@ class RewardWrapper(gym.Wrapper):
                 reward -= info['weighted_red_distance'] * param_.THREAT_WEIGHT
                 reward -= info['hits_target'] * param_.TARGET_HIT_COST
                 reward += info['red_shots'] * param_.RED_SHOT_REWARD
+                reward += info['distance_to_straight_action'] * param_.STRAIGHT_ACTION_COST
                 return reward, False, info
             else:  # red is learning
-                if info['red_loses']:
-                    return -param_.WIN_REWARD, True, info
-                if info['blue_loses']:
-                    return param_.WIN_REWARD, True, info
-                if 0 < info['red_oob']:
-                    return -param_.OOB_COST, True, info
-                if info['ttl'] < 0:
-                    return -param_.TTL_COST, True, info  # reds have been too long to hit the target
-                # else continues
+                done = False
                 reward = -param_.STEP_COST
                 reward += info['weighted_red_distance'] * param_.THREAT_WEIGHT
                 reward += info['hits_target'] * param_.TARGET_HIT_COST
                 reward -= info['red_shots'] * param_.RED_SHOT_REWARD
-                return reward, False, info
+                reward -= info['distance_to_straight_action'] * param_.STRAIGHT_ACTION_COST
+                if info['remaining reds'] == 0:
+                    done = True
+                    return reward, done, info
+                if info['remaining blues'] == 0:
+                    done = True
+                    reward += info['remaining reds'] * param_.TARGET_HIT_COST
+                    return reward, done, info
+                if 0 < info['red_oob']:
+                    done = True
+                    reward -= param_.OOB_COST
+                if info['ttl'] < 0:
+                    done = True
+                    reward -= param_.TTL_COST * info['remaining reds']  # reds have been too long to hit the target
+                # else continues
+
+                return reward, done, info

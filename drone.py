@@ -41,13 +41,14 @@ class Drone:
         self.init_position = self.position
         self.init_speed = self.speed
         self.color = param_.BLUE_COLOR if self.is_blue else param_.RED_COLOR
-        self.ttl = self.position[0] / self.max_speeds[0] * param_.TTL_RATIO
+        self.ttl = (self.position[0] / self.max_speeds[0]) * param_.TTL_RATIO + param_.TTL_MIN
 
     def reset(self):
         self.is_alive = True
         self.position = self.init_position
         self.speed = self.init_speed
         self.color = param_.BLUE_COLOR if self.is_blue else param_.RED_COLOR
+        self.ttl = (self.position[0] / self.max_speeds[0]) * param_.TTL_RATIO + param_.TTL_MIN
 
     def step(self, action):
         self.step_ = self.step_ + 1  # for debug purposes
@@ -61,6 +62,15 @@ class Drone:
             self.position, self.speed = self.from_xyz(pos), self.from_xyz(speed)
             self.ttl -= param_.STEP
             info['ttl'] = self.ttl
+
+            # evaluate the distance compared to the greedy action
+            straight_action = self.simple_red()
+            distance_to_straight_action = 0
+            for act in (straight_action - action):
+                distance_to_straight_action += act**2
+            distance_to_straight_action = np.sqrt(distance_to_straight_action)
+            info['distance_to_straight_action'] = distance_to_straight_action
+
                 
             if self._out_of_bounds():
                 coef = -1 if self.is_blue else 1
@@ -91,7 +101,8 @@ class Drone:
         if self.is_blue:
             return False
         else:
-            return np.sqrt(self.position[0]**2 + self.position[2]**2) < Settings.groundzone
+            distance_to_zero = np.sqrt(self.position[0]**2 + self.position[2]**2)
+            return distance_to_zero < Settings.groundzone
 
     def fires_(self, foe) -> bool:
         """
