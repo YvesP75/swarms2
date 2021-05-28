@@ -150,9 +150,9 @@ def simple_red_train(max_dispersion: np.float32 = 3,
         batch = 1
         mean_reward = 0
         while mean_reward < 0.95 and batch < 100:
-            red_model.learn(total_timesteps=total_timesteps//100)
+            red_model.learn(total_timesteps=total_timesteps//500)
             mean_reward, std_reward = evaluate_policy(red_model, red_model.env, n_eval_episodes=10)
-            print(f"REDS b{blues}r{reds} disp_b:10 disp_r{10*red_dispersion:2.0f}: "
+            print(f"REDS b{blues}r{reds} disp_b:10 disp_r{10*red_dispersion:2.0f} batch{batch}: "
                   f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
             red_model.save(save_dir + f"r{10 * red_dispersion:2.0f} batch{batch+1}")
             red_model.save(save_last_dir + "reds_last")

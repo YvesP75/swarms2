@@ -6,13 +6,14 @@ DURATION = 200  # seconds
 
 POLICY_FOLDER = 'default_policies'
 
-STEP_COST = 1/100
-OOB_COST = 1  # Out Of Bound : when the drone is below 0 or above a PERIMETER_Z
+STEP_COST = 0.01
+OOB_COST = 0.8  # Out Of Bound : when the drone is below 0 or above a PERIMETER_Z
 RED_SHOT_REWARD = 1  # when a red drone is shot
 TARGET_HIT_COST = 1  # when a red drone hits the target
 THREAT_WEIGHT = 0  # when reds are close to the target (* function of the red distance)
-STRAIGHT_ACTION_COST = 1/10  # when reds do not follow the shortest path
+STRAIGHT_ACTION_COST = 0.04  # when reds do not follow the shortest path
 TTL_COST = 0.7  # when a red is still alive after its TTL: it is a failure for both blues and reds
+
 TTL_RATIO = 3  # margin for red drones to get to the target if they went full speed
 TTL_MIN = 5  # at least 10s to succeed the mission : ttl = TTL_MIN + vmax * TTL_RATIO
 
@@ -71,15 +72,15 @@ REDS = 12
 RED_SQUADS = [3, 3, 3, 3, 3, 3]
 RED_SQUADS_RHO = [300, 700, 1000, 1200, 1500, 2000]
 RED_SQUADS_THETA = np.pi * np.array([0, 1/4, -1/4, -1/2, 1/2, 0])
-RED_SQUADS_ZED = [200, 250, 100, 250, 200, 100]
+RED_SQUADS_ZED = [180, 200, 100, 250, 200, 100]
 RED_DISTANCE_FACTOR = 1
 
 
-RED_RHO_NOISE = [10, 60, 100, 200, 200, 300]
+RED_RHO_NOISE = [50, 60, 100, 200, 200, 300]
 RED_THETA_NOISE = np.pi * np.array([1/6, 1/2, 1, 1, 1, 1])
-RED_ZED_NOISE = [20, 50, 10, 10, 50, 60]
+RED_ZED_NOISE = [30, 50, 10, 10, 50, 60]
 
-RED_SPEED_INIT = 0.01  # in ratio to max_speed
+RED_SPEED_INIT = 0.2  # in ratio to max_speed
 
 RED_COLOR = [150, 0, 0, 120]
 RED_DEAD_COLOR = [120, 50, 30]
