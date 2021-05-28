@@ -30,7 +30,7 @@ def bi_train(blue_model, red_model, blues: int = 1, reds: int = 1,
 
     # set the dispersion to initial drone positions
     Settings.blue_distance_factor = blue_dispersion * Settings.blue_distance_factor
-    Settings.red_distance_factor = blue_dispersion * Settings.red_distance_factor
+    Settings.red_distance_factor = red_dispersion * Settings.red_distance_factor
     Settings.red_theta_noise = red_dispersion * Settings.red_theta_noise
     Settings.red_rho_noise = red_dispersion * Settings.red_rho_noise
 
