@@ -39,16 +39,16 @@ class RewardWrapper(gym.Wrapper):
     def situation_evaluation(self, info):
 
         if self.is_double:
-            if info['red_loses'] or info['blue_loses']:
+            if info['remaining blues'] * info['remaining reds'] == 0:
                 return 0, True, info
             else:
                 return 0, False, info
 
         else:
             if self.is_blue:
-                if info['red_loses']:
+                if info['remaining reds'] == 0:
                     return param_.WIN_REWARD, True, info
-                if info['blue_loses']:
+                if info['remaining blues'] == 0:
                     return -param_.WIN_REWARD, True, info
                 if 0 < info['blue_oob']:
                     return -param_.OOB_COST, True, info

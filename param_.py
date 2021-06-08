@@ -8,14 +8,14 @@ POLICY_FOLDER = 'default_policies'
 
 STEP_COST = 0.01
 OOB_COST = 0.8  # Out Of Bound : when the drone is below 0 or above a PERIMETER_Z
-RED_SHOT_REWARD = 1  # when a red drone is shot
-TARGET_HIT_COST = 1  # when a red drone hits the target
+RED_SHOT_REWARD = 10  # when a red drone is shot
+TARGET_HIT_COST = 10  # when a red drone hits the target
 THREAT_WEIGHT = 0  # when reds are close to the target (* function of the red distance)
 STRAIGHT_ACTION_COST = 0.04  # when reds do not follow the shortest path
 TTL_COST = 0.7  # when a red is still alive after its TTL: it is a failure for both blues and reds
 
-TTL_RATIO = 3  # margin for red drones to get to the target if they went full speed
-TTL_MIN = 5  # at least 10s to succeed the mission : ttl = TTL_MIN + vmax * TTL_RATIO
+TTL_RATIO = 2  # margin for red drones to get to the target if they went full speed
+TTL_MIN = 4  # at least to succeed the mission : ttl = TTL_MIN + vmax * TTL_RATIO
 
 ELEVATION_SCALE = 1
 TRAJ_LENGTH = 6
@@ -26,8 +26,8 @@ SIMU_SPEED = 0.2
 the playground parameters
 """
 
-PERIMETER = 1000
-PERIMETER_Z = 400
+PERIMETER = 5000
+PERIMETER_Z = 600
 
 # PERIMETER of the ground zone to defend
 GROUNDZONE = 100

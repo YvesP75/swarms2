@@ -36,7 +36,15 @@ class DroneModel:
         self.max_down_speed = np.sqrt(self.Fz_minus / self.Cz)
         self.max_rot_speed = 2 * np.pi
 
-    def get_trajectory(self, pos_xyz, speed_xyz, action: np.ndarray(3,), time_: np.ndarray(1,)):
+    def get_trajectory(self, pos_xyz, speed_xyz, action: np.ndarray(3,), time_: np.ndarray(1,)) -> np.ndarray(3,):
+        '''
+        returns next position given the current position, speed and applied forces
+        :param pos_xyz:
+        :param speed_xyz:
+        :param action:
+        :param time_:
+        :return:
+        '''
 
         rho = action[0]  # in 0, 1
         theta = 2*np.pi * action[1]  # in 0, 2pi
@@ -55,6 +63,7 @@ class DroneModel:
             Dfun=lambda u, v: self.fulljac(u, v, self.Cxy, self.Cz, self.mass)
         )
         x, y, z, dx, dy, dz = result_.T
+
         return np.array([x, y, z], dtype='float32'), np.array([dx, dy, dz], dtype='float32')
 
     def drone_dynamics(self, pos_speed, time_, f_x, f_y, f_z, Cxy, Cz, m):
@@ -66,7 +75,17 @@ class DroneModel:
                 1/m * (f_y - Cxy * dy * np.sqrt(dx**2 + dy**2 + dz**2)),
                 1/m * (f_z - Cz * dz * np.sqrt(dx**2 + dy**2 + dz**2))]
 
-    def fulljac(self, pos_speed, time_, Cxy, Cz, m):
+    def fulljac(self, pos_speed, time_, Cxy, Cz, m) -> np.ndarray((6, 6), ):
+        '''
+        returns the Jacobian of the differential equation of the trajectory
+        :param pos_speed:
+        :param time_:
+        :param Cxy:
+        :param Cz:
+        :param m:
+        :return:
+        '''
+
         x, y, z, dx, dy, dz = pos_speed
         J = np.zeros((6, 6))
         J[0, 3] = 1

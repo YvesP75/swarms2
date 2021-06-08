@@ -9,7 +9,6 @@ class FilterWrapper(gym.Wrapper):
     """
 
     def __init__(self, env):
-        # Call the parent constructor, so we can access self.env later
 
         self.nb_blues, self.nb_reds = env.nb_blues, env.nb_reds
 

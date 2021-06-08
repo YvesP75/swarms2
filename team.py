@@ -52,7 +52,8 @@ class Team:
             info['oob'] += i['oob'] if 'oob' in i else 0
             info['hits_target'] += i['hits_target'] if 'hits_target' in i else 0
             info['delta_distance'] = 0 if self.is_blue else self.delta_weighted_distance()
-            info['distance_to_straight_action'] += i['distance_to_straight_action']
+            info['distance_to_straight_action'] += i['distance_to_straight_action'] \
+                if 'distance_to_straight_action' in i else 0
         return obs, sum(reward), done, info
 
     def delta_weighted_distance(self):
@@ -83,8 +84,7 @@ class BlueTeam(Team):
         blue_speed = Settings.blue_speed_init * self.drone_model.max_speed
         circle = index = 0
         for d in range(number_of_drones):
-            positions[d] = np.array([min(Settings.blue_circles_rho[circle] * Settings.blue_distance_factor,
-                                         param_.PERIMETER),
+            positions[d] = np.array([Settings.blue_circles_rho[circle],
                                      Settings.blue_circles_theta[circle] + index * 2 * np.pi / 3,
                                      Settings.blue_circles_zed[circle]])
             clockwise = 1 - 2 * (circle % 2)
@@ -108,24 +108,24 @@ class RedTeam(Team):
         self.drone_model = DroneModel(self.is_blue)
 
         positions = np.zeros((number_of_drones, 3))
+        positions_noise = np.zeros((number_of_drones, 3))
         speeds = np.zeros((number_of_drones, 3))
         speed_rho = Settings.red_speed_init * self.drone_model.max_speed
         squad = index = 0
         for d in range(number_of_drones):
-            positions[d] = [min(Settings.red_squads_rho[squad] * Settings.red_distance_factor
-                            + np.random.rand() * Settings.red_rho_noise[squad],
-                                param_.PERIMETER),
-                            Settings.red_squads_theta[squad] + np.random.rand() * Settings.red_theta_noise[squad],
-                            np.clip(
-                                (Settings.red_squads_zed[squad]+np.random.rand()*Settings.red_zed_noise[squad]) *
-                                Settings.red_distance_factor,
-                                0,
-                                param_.PERIMETER_Z)]
+            positions[d] = [Settings.red_squads_rho[squad],
+                            Settings.red_squads_theta[squad],
+                            Settings.red_squads_zed[squad]]
+            positions_noise[d] = [Settings.red_rho_noise[squad],
+                                  Settings.red_theta_noise[squad],
+                                  Settings.red_zed_noise[squad]]
+            speeds[d] = [speed_rho, np.pi + positions[d][1], 0]
             speeds[d] = [speed_rho, np.pi + positions[d][1], 0]
             index += 1
             if index == Settings.red_squads[squad]:
                 index = 0
                 squad += 1
 
-        self.drones = [Drone(is_blue=False, position=position, speed=speed, id_=id_)
-                       for (id_, position, speed) in zip(range(len(positions)), positions, speeds)]
+        self.drones = [Drone(is_blue=False, position=position, position_noise=position_noise, speed=speed, id_=id_)
+                       for (id_, position, position_noise, speed) in
+                       zip(range(len(positions)), positions, positions_noise, speeds)]

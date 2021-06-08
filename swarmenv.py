@@ -68,10 +68,14 @@ class SwarmEnv(gym.Env):
         pass
 
     def step(self, action):
+
+        self.steps += 1
+
         blue_action, red_action = action
         blue_obs, blue_reward, blue_done, blue_info = self.blue_team.step(blue_action)
         red_obs, red_reward, red_done, red_info = self.red_team.step(red_action)
-        bf_obs, bf_reward, bf_done, bf_info, rf_obs, rf_reward, rf_done, rf_info = self.playground.step()
+        bf_obs, bf_reward, remaining_blues, blue_shots, rf_obs, rf_reward, remaining_reds, red_shots = \
+            self.playground.step()
         _, blue_deads = self.blue_team.get_observation()
         _, red_deads = self.red_team.get_observation()
         obs = blue_obs, red_obs, bf_obs, rf_obs, blue_deads, red_deads
@@ -82,13 +86,15 @@ class SwarmEnv(gym.Env):
         info['red_oob'] = red_info['oob']
         info['blue_oob'] = blue_info['oob']
         info['hits_target'] = red_info['hits_target']
-        info['blue_shots'] = rf_info
-        info['red_shots'] = bf_info
+        info['blue_shots'] = blue_shots
+        info['red_shots'] = red_shots
         info['weighted_red_distance'] = red_info['delta_distance']
-        info['remaining reds'] = bf_done
-        info['remaining blues'] = rf_done
+        info['remaining blues'] = len(blue_deads)-sum(blue_deads)
+        info['remaining reds'] = len(red_deads)-sum(red_deads)
         info['ttl'] = red_info['ttl']
         info['distance_to_straight_action'] = red_info['distance_to_straight_action']
 
+        if red_info['oob'] + blue_info['oob'] + red_info['hits_target'] + blue_shots + red_shots > 0:
+            print('something happened')
 
         return obs, reward, done, info

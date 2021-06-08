@@ -11,6 +11,7 @@ from symetry_wrap import SymetryWrapper
 from rotate_wrap import RotateWrapper
 from sort_wrap import SortWrapper
 from team_wrap import TeamWrapper
+from reward_wrap import RewardWrapper
 
 from runner import run_episode
 from settings import Settings, define_
@@ -18,7 +19,7 @@ import param_
 from swarmenv import SwarmEnv
 
 
-def run(with_streamlit=True, blues: int = 1, reds: int = 1, policy_folder: str = 'last'):
+def run(with_streamlit=True, blues: int = 4, reds: int = 6, policy_folder: str = 'reds_last'):
 
     # define the policy folder is: where the trained policies are to be found
     Settings.policy_folder = policy_folder
@@ -39,10 +40,12 @@ def run(with_streamlit=True, blues: int = 1, reds: int = 1, policy_folder: str =
             SymetryWrapper(
                 RotateWrapper(env)))
 
-    env = TeamWrapper(env, is_double=True)
+    env = RewardWrapper(TeamWrapper(env, is_double=True), is_double=True)
 
     obs = env.reset()
     run_episode(env, obs, blues=blues, reds=reds)
+
+    print('done')
 
     # display the data with Streamlit
     if with_streamlit:
@@ -167,5 +170,5 @@ def get_path_layers(df_path: pd.DataFrame, step: int) -> [pdk.Layer]:
 
 
 # and ... do not forget
-run(with_streamlit=True, policy_folder='0527_14_test')
+run(with_streamlit=True, policy_folder='last')
 # run(blues=1, reds=3, with_streamlit=False, policy_folder='0527_14_test')

@@ -73,7 +73,7 @@ def meta_train(blues: int = 1, reds: int = 1,
     red_env = RewardWrapper(TeamWrapper(env, is_blue=False), is_blue=False)
 
     blue_model = SAC(MlpPolicy, blue_env, verbose=0)
-    red_model = SAC(MlpPolicy, red_env, verbose=1)
+    red_model = SAC(MlpPolicy, red_env, verbose=0)
 
     for red_dispersion in np.linspace(0.1, max_dispersion, num=iteration):
         for blue_dispersion in np.linspace(max_dispersion, 0.3, num=iteration):
@@ -110,7 +110,7 @@ def print_spaces(env, name: str):
 
 def simple_red_train(max_dispersion: np.float32 = 3,
                      blues: int = 1, reds: int = 1,
-                     iteration: int = 15, total_timesteps: int = 100,
+                     iteration: int = 25, total_timesteps: int = 100,
                      policy_folder: str = "simple_red"):
     Settings.policy_folder = policy_folder
     print(f"Simple_red: reds :{reds}, blues: {blues}")
@@ -120,42 +120,55 @@ def simple_red_train(max_dispersion: np.float32 = 3,
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(save_last_dir, exist_ok=True)
 
+        # launch the episode to get the data
+    steps = int(param_.DURATION / param_.STEP)
+    Settings.blues, Settings.reds = blues, reds
+
+    env = SortWrapper(
+        SymetryWrapper(
+            RotateWrapper(
+                ReduxWrapper(
+                    DistriWrapper(
+                        FilterWrapper(
+                            MonitorWrapper(
+                                SwarmEnv(blues=blues, reds=reds), steps, verbose=False)))))))
+
+
+
+    red_env = RewardWrapper(TeamWrapper(env, is_blue=False), is_blue=False)
+    red_model = SAC(MlpPolicy, red_env, verbose=1)
+
+
     # set the dispersion to initial drone positions
     Settings.blue_distance_factor = 10 * Settings.blue_distance_factor
 
-    for red_dispersion in np.linspace(0.28, max_dispersion, num=iteration):
-        Settings.red_distance_factor = red_dispersion * Settings.red_distance_factor
-        Settings.red_theta_noise = red_dispersion * Settings.red_theta_noise
-        Settings.red_rho_noise = red_dispersion * Settings.red_rho_noise
+    this_iteration = 0
 
-        Settings.blues, Settings.reds = blues, reds
+    for red_dispersion in np.linspace(0.33, max_dispersion, num=iteration):
 
-        # launch the episode to get the data
-        steps = int(param_.DURATION / param_.STEP)
-
-        env = SortWrapper(
-            SymetryWrapper(
-                RotateWrapper(
-                    ReduxWrapper(
-                        DistriWrapper(
-                            FilterWrapper(
-                                MonitorWrapper(
-                                    SwarmEnv(blues=blues, reds=reds), steps, verbose=False)))))))
-
-        red_env = RewardWrapper(TeamWrapper(env, is_blue=False), is_blue=False)
-
-        red_model = SAC(MlpPolicy, red_env, verbose=1)
+        Settings.red_distance_factor = red_dispersion
 
         # launch learning for red drones and then blue drones
+        this_iteration += 1
         batch = 1
         mean_reward = 0
-        while mean_reward < 0.95 and batch < 100:
-            red_model.learn(total_timesteps=total_timesteps//500)
-            mean_reward, std_reward = evaluate_policy(red_model, red_model.env, n_eval_episodes=10)
-            print(f"REDS b{blues}r{reds} disp_b:10 disp_r{10*red_dispersion:2.0f} batch{batch}: "
+        delta_reward = 0
+        stability = 0
+        count = 0
+        while mean_reward < 9 or stability < 3 or count < 30:
+            count += 1
+            red_model.learn(total_timesteps=total_timesteps//10)
+            last_reward = mean_reward
+            mean_reward, std_reward = evaluate_policy(red_model, red_model.env, n_eval_episodes=100)
+            delta_reward = mean_reward - last_reward
+            if -0.1 <= delta_reward <= 0.1:
+                stability += 1
+            else:
+                stability = 0
+            print(f"REDS b{blues}r{reds} iteration{this_iteration} batch{batch}: "
                   f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
-            red_model.save(save_dir + f"r{10 * red_dispersion:2.0f} batch{batch+1}")
+            red_model.save(save_dir + f"{this_iteration} batch{batch+1}")
             red_model.save(save_last_dir + "reds_last")
             batch += 1
 
-simple_red_train(total_timesteps = 50000)
+simple_red_train(total_timesteps = 50000, policy_folder="simply_red")

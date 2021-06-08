@@ -13,6 +13,7 @@ class Drone:
     """
     is_blue: bool = True
     position: np.ndarray((3,)) = np.zeros((3,))
+    position_noise: np.ndarray((3,)) = np.zeros((3,))
     drone_model: DroneModel = None
     max_speeds: np.ndarray((3,)) = None
     min_speeds: np.ndarray((3,)) = None
@@ -38,17 +39,31 @@ class Drone:
                                     0,
                                     -self.drone_model.max_down_speed])
 
-        self.init_position = self.position
-        self.init_speed = self.speed
+        self.init_position = np.copy(self.position)
+        self.init_position_noise = np.copy(self.position_noise)
+        self.init_speed = np.copy(self.speed)
         self.color = param_.BLUE_COLOR if self.is_blue else param_.RED_COLOR
         self.ttl = (self.position[0] / self.max_speeds[0]) * param_.TTL_RATIO + param_.TTL_MIN
 
     def reset(self):
         self.is_alive = True
-        self.position = self.init_position
         self.speed = self.init_speed
         self.color = param_.BLUE_COLOR if self.is_blue else param_.RED_COLOR
+        distance_factor = Settings.blue_distance_factor if self.is_blue else Settings.red_distance_factor
+        self.position[0] = self.init_position[0]*distance_factor
+        self.position[2] = self.init_position[2]*distance_factor
+        self.position_noise *= distance_factor
+
+        self.position[0] = np.clip(self.position[0] + np.random.rand() * self.position_noise[0],
+                                   param_.GROUNDZONE * 1.1,
+                                   param_.PERIMETER * 0.9)
+        self.position[1] = self.position[1] + np.random.rand() * self.position_noise[1]
+        self.position[2] = np.clip(self.position[2] + np.random.rand() * self.position_noise[2],
+                                   param_.GROUNDZONE * 1.1,
+                                   param_.PERIMETER_Z * 0.9)
+
         self.ttl = (self.position[0] / self.max_speeds[0]) * param_.TTL_RATIO + param_.TTL_MIN
+
 
     def step(self, action):
         self.step_ = self.step_ + 1  # for debug purposes
@@ -64,14 +79,26 @@ class Drone:
             info['ttl'] = self.ttl
 
             # evaluate the distance compared to the greedy action
-            straight_action = self.simple_red()
-            distance_to_straight_action = 0
-            for act in (straight_action - action):
-                distance_to_straight_action += act**2
-            distance_to_straight_action = np.sqrt(distance_to_straight_action)
-            info['distance_to_straight_action'] = distance_to_straight_action
+            '''
+            if self.is_blue:
+                straight_action, time_to_catch = self.simple_blue()
+                tolerance = 0.05 if 4 < time_to_catch else 1 if 2 < time_to_catch else 3
+                distance = 1 if 0.1 < np.linalg.norm(straight_action - action) else 0
+            else:
+                straight_action = self.simple_red()
+                distance = 1 if 0.1 < np.linalg.norm(straight_action - action) else 0
+            info['distance_to_straight_action'] = distance
+            '''
 
-                
+            info['distance_to_straight_action'] = 0
+
+            if self._hits_target():
+                info['hits_target'] = 1
+                reward = -param_.TARGET_HIT_COST
+                #    print("another red hits the target")
+                self.color = param_.RED_SUCCESS_COLOR
+                self.is_alive = False  # the red has done its job ...
+
             if self._out_of_bounds():
                 coef = -1 if self.is_blue else 1
                 reward = coef * param_.OOB_COST
@@ -81,13 +108,6 @@ class Drone:
                 #    print("another blue is oob")
                 # else:
                 #   print("another red is oob")
-            else:
-                if self._hits_target():
-                    info['hits_target'] = 1
-                    reward = -param_.TARGET_HIT_COST
-                #    print("another red hits the target")
-                    self.color = param_.RED_SUCCESS_COLOR
-                    self.is_alive = False  # the red has done its job ...
 
         obs = self.get_observation()
         done = not self.is_alive
@@ -95,7 +115,7 @@ class Drone:
         return obs, reward, done, info
 
     def _out_of_bounds(self):
-        return not (0 < self.position[2] < Settings.perimeter_z and self.position[1] < Settings.perimeter)
+        return not (0 < self.position[2] < Settings.perimeter_z and self.position[0] < Settings.perimeter)
 
     def _hits_target(self):
         if self.is_blue:
@@ -120,15 +140,28 @@ class Drone:
         pos_xyz /= distance
 
         if distance < self.drone_model.distance_to_neutralisation:
-            vit_xyz = self.to_xyz(self.speed)
-            vit_xyz /= np.linalg.norm(vit_xyz)
-            cos_theta = np.dot(pos_xyz, vit_xyz)
-            if 0 < cos_theta:
-                theta = np.arccos(cos_theta)
-                it_is_a_hit = theta < self.drone_model.angle_to_neutralisation
-                return it_is_a_hit
+            return self.is_in_the_cone(foe)
 
         return False
+
+
+    def is_in_the_cone(self, foe) -> bool:
+        '''
+        verifies if foe is in the cone (without any regard to distance)
+        :param foe:
+        :return:
+        '''
+        pos_xyz = - self.to_xyz(self.position) + self.to_xyz(foe.position)
+        pos_xyz /= np.linalg.norm(pos_xyz)
+        vit_xyz = self.to_xyz(self.speed)
+        vit_xyz /= np.linalg.norm(vit_xyz)
+        cos_theta = np.dot(pos_xyz, vit_xyz)
+        in_the_cone = False
+        if 0 < cos_theta:
+            theta = np.arccos(cos_theta)
+            in_the_cone = theta < self.drone_model.angle_to_neutralisation
+        return in_the_cone
+
 
     # tell the drones that they are dead
     def is_killed(self, is_blue=True):
@@ -213,7 +246,12 @@ class Drone:
 
         return np.append(normalised_position, normalised_speed)
 
+
     def simple_red(self) -> np.ndarray(shape=(3,)):
+        '''
+        defines the actions for a trajectory targeting zero
+        :return:
+        '''
 
         theta = (self.position[1] + np.pi) / (2*np.pi) % 1
 
@@ -235,3 +273,45 @@ class Drone:
         action = np.array([1, theta, psy])
 
         return action
+
+    def simple_blue(self) -> (np.ndarray(shape=(3,)), float):
+        '''
+        defines the actions for a trajectory targeting ... the given target
+        :return:
+        '''
+
+
+        direction = self.position
+
+        theta = (direction[1] + np.pi) / (2*np.pi) % 1
+
+        # slope of drone given its position
+        tan_phi = np.sign(direction[2]) * np.inf if direction[0] == 0 else direction[2]/direction[0]
+        # slope of drone speed
+        tan_phi_point = np.sign(self.speed[2]) * np.inf if self.speed[0] == 0 else self.speed[2]/self.speed[0]
+        # slope of forces
+        f_ratio = self.drone_model.Fxy / self.drone_model.Fz_minus
+        # go up if speed slope is too steep and vertical speed < 0 else take the position angle for forces angle
+        psy = 0.7 if tan_phi_point < -tan_phi else -np.arctan(tan_phi * f_ratio) / np.pi + 0.5
+
+        action = np.array([1, theta, psy])
+
+        return action
+
+
+
+
+
+    def next_simple_pos(self):
+        next_pos = np.zeros(3)
+        simple_next = self.pos[0] * np.exp(1j * self.pos[1]) + self.speed[0] * np.exp(1j * self.speed[1]) * param_.step
+        next_pos[0] = np.abs(simple_next)
+        next_pos[1] = np.arg(simple_next)
+        next_pos[2] = self.pos[2] + self.speed[2] * param_.step
+        return next_pos
+
+    def copy_pos_speed(self, drone_to_copy):
+        self.position = drone_to_copy.position
+        self.speed = drone_to_copy.speed
+
+

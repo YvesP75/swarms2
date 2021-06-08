@@ -67,6 +67,7 @@ class Playground:
         red_deads = np.unique(np.argwhere(self.blues_have_fired_reds >= self.blue_shots_to_kill).T[1])
         blue_deads = np.unique(np.argwhere(self.reds_have_fired_blues >= self.red_shots_to_kill).T[1])
 
+
         # tell the drones that they are dead
         for drone_id in blue_deads:
             self.blue_drones[drone_id].is_killed(is_blue=True)
@@ -79,12 +80,13 @@ class Playground:
 
         bf_obs, rf_obs = self.get_observation()
         bf_reward = rf_reward = 0
-        bf_done, rf_done = len(red_drones), len(blue_drones)
-        bf_info, rf_info = len(red_deads), len(blue_deads)
+        remaining_blues, remaining_reds = len(blue_drones), len(red_drones),
+        blue_shots, red_shots = len(blue_deads), len(red_deads)
 
-        # if bf_done + rf_done > 0:
-        #    print('someone is killed: {0} blues and {1} reds'.format(rf_done, bf_done))
+        if blue_shots + red_shots > 0:
+            print('someone is killed: {0} blues and {1} reds'.format(blue_shots, red_shots))
 
-        return bf_obs, bf_reward, bf_done, bf_info, rf_obs, rf_reward, rf_done, rf_info
+        return bf_obs, bf_reward, remaining_blues, blue_shots, rf_obs, rf_reward, remaining_reds, red_shots
+
 
 

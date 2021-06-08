@@ -13,3 +13,4 @@ def run_episode(env, obs, blues: int, reds: int):
         obs, reward, done, info = env.step(action)
         sum_reward += reward
     return obs, sum_reward, done, info
+
