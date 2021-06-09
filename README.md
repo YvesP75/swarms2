@@ -35,4 +35,4 @@ streamlit run show.py
 **tuning the rewards**
 The rewards may be tuned in the _param.py file and logic is in the team_wrap.py file in the 'evaluate_situation' function.
 When is_double is true, means that there is no learning: simulation is carried out with already defined policies. Only the final outcome is to be considered.
-Otherwise, two cases have to be taken into account, whether blue or red is learning
+Otherwise, two cases have to be taken into account, whether blue or red is learning# streamlit-to-heroku-tutorial
