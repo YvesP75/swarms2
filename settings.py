@@ -57,11 +57,11 @@ def define_(with_streamlit: bool = True, blues: int = Settings.blues, reds: int 
         st.text('<- Set parameters')
 
         st.sidebar.subheader("Define the battlefield")
-        blues = st.sidebar.slider("how many blues on defense?", 1, 12, 6)
+        blues = st.sidebar.slider("how many blues on defense?", 1, 20, 6)
         Settings.blues = blues
         blue_dispersion = st.sidebar.slider("set the average blue dispersion", 0.3, 1.0, 0.8)
         Settings.reds = reds
-        reds = st.sidebar.slider("how many reds are on the attack?", 1, 12, 4)
+        reds = st.sidebar.slider("how many reds are on the attack?", 1, 20, 6)
         Settings.reds = reds
         red_dispersion = st.sidebar.slider("set the average red dispersion", 0.3, 1.0, 0.7)
 

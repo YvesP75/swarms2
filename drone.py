@@ -79,23 +79,24 @@ class Drone:
             info['ttl'] = self.ttl
 
             # evaluate the distance compared to the greedy action
-            '''
+
             if self.is_blue:
+                '''
+                for further usage
                 straight_action, time_to_catch = self.simple_blue()
                 tolerance = 0.05 if 4 < time_to_catch else 1 if 2 < time_to_catch else 3
-                distance = 1 if 0.1 < np.linalg.norm(straight_action - action) else 0
+                distance = 1 if tolerance < np.linalg.norm(straight_action - action) else 0
+                '''
+                distance = 1
             else:
                 straight_action = self.simple_red()
                 distance = 1 if 0.1 < np.linalg.norm(straight_action - action) else 0
             info['distance_to_straight_action'] = distance
-            '''
 
-            info['distance_to_straight_action'] = 0
 
             if self._hits_target():
                 info['hits_target'] = 1
                 reward = -param_.TARGET_HIT_COST
-                #    print("another red hits the target")
                 self.color = param_.RED_SUCCESS_COLOR
                 self.is_alive = False  # the red has done its job ...
 
@@ -104,10 +105,6 @@ class Drone:
                 reward = coef * param_.OOB_COST
                 self.is_alive = False
                 info['oob'] = 1
-                # if self.is_blue:
-                #    print("another blue is oob")
-                # else:
-                #   print("another red is oob")
 
         obs = self.get_observation()
         done = not self.is_alive
@@ -247,41 +244,19 @@ class Drone:
         return np.append(normalised_position, normalised_speed)
 
 
-    def simple_red(self) -> np.ndarray(shape=(3,)):
+    def simple_red(self, target: np.ndarray(3,)=np.zeros(3), z_margin: float=50) -> np.ndarray(shape=(3,)):
         '''
         defines the actions for a trajectory targeting zero
         :return:
         '''
 
-        theta = (self.position[1] + np.pi) / (2*np.pi) % 1
+        self_z = self.position[0] * np.exp(1j * self.position[1])
+        target_z = target[0] * np.exp(1j * target[1])
 
-        # slope of drone given its position
-        tan_phi = np.sign(self.position[2]) * np.inf if self.position[0] == 0 else self.position[2]/self.position[0]
-        # slope of drone speed
-        tan_phi_point = np.sign(self.speed[2]) * np.inf if self.speed[0] == 0 else self.speed[2]/self.speed[0]
-        # slope of forces
-        f_ratio = self.drone_model.Fxy / self.drone_model.Fz_minus
-        # go up if speed slope is too steep and vertical speed < 0 else take the position angle for forces angle
-        psy = 0.5 if tan_phi_point < -tan_phi else -np.arctan(tan_phi * f_ratio) / np.pi + 0.5
-
-        if Settings.perimeter_z / 2 < self.position[2]:
-            psy = min(0.2, psy)
-
-        if self.position[0] < 1.5 * Settings.groundzone:
-            psy = min(0.2, psy)
-
-        action = np.array([1, theta, psy])
-
-        return action
-
-    def simple_blue(self) -> (np.ndarray(shape=(3,)), float):
-        '''
-        defines the actions for a trajectory targeting ... the given target
-        :return:
-        '''
-
-
-        direction = self.position
+        direction = np.zeros(3)
+        direction[0] = np.abs(self_z - target_z)
+        direction[1] = np.angle(self_z - target_z)
+        direction[2] = self.position[2] - target[2] - z_margin
 
         theta = (direction[1] + np.pi) / (2*np.pi) % 1
 
@@ -292,15 +267,49 @@ class Drone:
         # slope of forces
         f_ratio = self.drone_model.Fxy / self.drone_model.Fz_minus
         # go up if speed slope is too steep and vertical speed < 0 else take the position angle for forces angle
-        psy = 0.7 if tan_phi_point < -tan_phi else -np.arctan(tan_phi * f_ratio) / np.pi + 0.5
+        psy = -np.arctan(tan_phi * f_ratio) / np.pi + 0.5
 
         action = np.array([1, theta, psy])
 
         return action
 
+    def simple_target(self, target: (np.ndarray(shape=(3,)))) -> np.ndarray(shape=(3,)):
+        '''
+        defines the actions for a trajectory targeting ... the given target
+        :return:
+        '''
+
+        self_z = self.position[0] * np.exp(1j * self.position[1])
+        target_z = target[0] * np.exp(1j * target[1])
+
+        direction = np.zeros(3)
+        direction[0] = np.abs(self_z - target_z)
+        direction[1] = np.angle(self_z - target_z)
+        direction[2] = self.position[2] - target[2]
+
+        theta = (direction[1] + np.pi) / (2*np.pi) % 1
+
+        # slope of drone given its position
+        tan_phi = np.sign(direction[2]) * np.inf if direction[0] == 0 else direction[2]/direction[0]
+        # slope of drone speed
+        tan_phi_point = np.sign(self.speed[2]) * np.inf if self.speed[0] == 0 else self.speed[2]/self.speed[0]
+        # slope of forces
+        f_ratio = self.drone_model.Fxy / self.drone_model.Fz_minus
+        # go up if speed slope is too steep and vertical speed < 0 else take the position angle for forces angle
+        psy = 0.5 if tan_phi_point < -tan_phi else -np.arctan(tan_phi * f_ratio) / np.pi + 0.5
+
+        if Settings.perimeter_z / 2 < direction[2]:
+            psy = min(0.2, psy)
+
+        if self.position[0] < 1.5 * Settings.groundzone:
+            psy = min(0.2, psy)
+
+
+        action = np.array([1, theta, psy])
 
 
 
+        return action
 
     def next_simple_pos(self):
         next_pos = np.zeros(3)
