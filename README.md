@@ -12,7 +12,7 @@ Pillow may have some difficulties in its installation. A possibility is to try f
 All files are flat.
 two files contain the starting points :
 train.py allows for training
-show.py launches the streamlit app
+app.py launches the streamlit app
 
 **train.py**
 the training is done iteratively by starting with one blue drone and one red drone, increasing distance progressively and adding drones.
